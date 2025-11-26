@@ -47,9 +47,11 @@ const MainLayout = () => {
                 zIndex: 30,
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0 1rem'
+                padding: '0 1rem',
+                overflow: 'hidden',
+                pointerEvents: 'none' // Prevent blocking clicks
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', pointerEvents: 'auto' }}>
                     <button
                         className="btn btn-ghost icon-only"
                         onClick={() => setIsSidebarOpen(true)}
@@ -62,7 +64,7 @@ const MainLayout = () => {
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'auto' }}>
                     <button className="btn btn-ghost icon-only">
                         <Bell size={20} />
                     </button>

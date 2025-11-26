@@ -298,7 +298,8 @@ body {
     margin-left: 260px;
     padding: var(--spacing-xl);
     overflow-y: auto;
-    height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
 /* Header Styles */
