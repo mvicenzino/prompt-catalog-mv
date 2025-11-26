@@ -4,7 +4,7 @@ import { usePrompts } from '../hooks/usePrompts';
 
 const AddPromptModal = ({ isOpen, onClose }) => {
     const { addPrompt } = usePrompts();
-    const [image, setImage] = useState(null);
+    const [attachment, setAttachment] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -15,41 +15,65 @@ const AddPromptModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const handleImageUpload = (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Check size limit (1MB)
+            if (file.size > 1024 * 1024) {
+                alert('File is too large. Please select a file under 1MB.');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
+                const result = event.target.result;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
+                if (file.type.startsWith('image/')) {
+                    // Compress image
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
                         }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
 
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
 
-                    // Compress to JPEG with 0.7 quality to ensure it fits in localStorage
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    setImage(dataUrl);
-                };
-                img.src = event.target.result;
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        setAttachment({
+                            type: file.type,
+                            name: file.name,
+                            data: dataUrl,
+                            size: Math.round((dataUrl.length * 3) / 4) // Approx size
+                        });
+                    };
+                    img.src = result;
+                } else {
+                    // Store other files as is (base64)
+                    setAttachment({
+                        type: file.type || 'application/octet-stream',
+                        name: file.name,
+                        data: result,
+                        size: file.size
+                    });
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -60,11 +84,11 @@ const AddPromptModal = ({ isOpen, onClose }) => {
         addPrompt({
             ...formData,
             tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-            userImage: image
+            attachment: attachment // Save the attachment object
         });
         onClose();
         setFormData({ title: '', content: '', category: 'Images', source: 'Other', tags: '' });
-        setImage(null);
+        setAttachment(null);
     };
 
     return (
@@ -98,19 +122,34 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className="form-group">
-                        <label>Upload Image (Optional)</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="input"
-                            style={{ padding: '0.5rem' }}
-                        />
-                        {image && (
-                            <div style={{ marginTop: '0.5rem', width: '100px', height: '100px', overflow: 'hidden', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                                <img src={image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </div>
-                        )}
+                        <label>Attachment (Image or File)</label>
+                        <div className="file-upload-container" style={{ border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '0.5rem' }}>
+                            <input
+                                type="file"
+                                onChange={handleFileSelect}
+                                className="input"
+                                style={{ border: 'none', padding: '0' }}
+                            />
+                            {attachment && (
+                                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {attachment.type.startsWith('image/') ? (
+                                        <img src={attachment.data} alt="Preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    ) : (
+                                        <div style={{ width: '40px', height: '40px', background: 'var(--border-subtle)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>FILE</span>
+                                        </div>
+                                    )}
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{attachment.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{(attachment.size / 1024).toFixed(1)} KB</div>
+                                    </div>
+                                    <button type="button" className="btn btn-ghost icon-only sm" onClick={() => setAttachment(null)}>
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-xs text-secondary mt-1">Max size: 1MB. Images will be compressed.</p>
                     </div>
 
                     <div className="form-row">

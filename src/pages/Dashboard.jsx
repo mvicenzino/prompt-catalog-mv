@@ -8,7 +8,7 @@ import { usePrompts } from '../hooks/usePrompts';
 const Dashboard = () => {
     const { category } = useParams();
     const location = useLocation();
-    const { prompts, toggleFavorite, deletePrompt } = usePrompts();
+    const { prompts, toggleFavorite, deletePrompt, updatePrompt } = usePrompts();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrompt, setSelectedPrompt] = useState(null);
 
@@ -76,6 +76,7 @@ const Dashboard = () => {
                 isOpen={!!selectedPrompt}
                 onClose={() => setSelectedPrompt(null)}
                 onDelete={() => handleDelete(selectedPrompt.id)}
+                onUpdate={updatePrompt}
             />
         </div>
     );

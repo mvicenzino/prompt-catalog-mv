@@ -651,5 +651,11 @@ export const usePrompts = () => {
         setPrompts(prompts.filter(p => p.id !== id));
     };
 
-    return { prompts, addPrompt, toggleFavorite, deletePrompt };
+    const updatePrompt = (updatedPrompt) => {
+        setPrompts(prompts.map(p =>
+            p.id === updatedPrompt.id ? updatedPrompt : p
+        ));
+    };
+
+    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt };
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Copy, Twitter, MessageCircle, User, Image as ImageIcon, Sparkles, Brain, Zap, Trash2 } from 'lucide-react';
 
-const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
+const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const [variables, setVariables] = useState({});
 
     // Reset variables when prompt changes
@@ -52,6 +52,87 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
             ...prev,
             [key]: value
         }));
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Check size limit (1MB)
+            if (file.size > 1024 * 1024) {
+                alert('File is too large. Please select a file under 1MB.');
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const result = event.target.result;
+
+                if (file.type.startsWith('image/')) {
+                    // Compress image
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_WIDTH = 800;
+                        const MAX_HEIGHT = 800;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        onUpdate({
+                            ...prompt,
+                            attachment: {
+                                type: file.type,
+                                name: file.name,
+                                data: dataUrl,
+                                size: Math.round((dataUrl.length * 3) / 4)
+                            },
+                            userImage: undefined // Clear legacy field
+                        });
+                    };
+                    img.src = result;
+                } else {
+                    // Store other files
+                    onUpdate({
+                        ...prompt,
+                        attachment: {
+                            type: file.type || 'application/octet-stream',
+                            name: file.name,
+                            data: result,
+                            size: file.size
+                        },
+                        userImage: undefined // Clear legacy field
+                    });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRemoveAttachment = () => {
+        if (window.confirm('Remove the attachment?')) {
+            const updatedPrompt = { ...prompt };
+            delete updatedPrompt.attachment;
+            delete updatedPrompt.userImage;
+            onUpdate(updatedPrompt);
+        }
     };
 
     const handleOpenAI = (toolUrl, toolName) => {
@@ -121,6 +202,9 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
 
     const examples = getExamples();
     const hasVariables = Object.keys(variables).length > 0;
+
+    // Backward compatibility for userImage
+    const displayAttachment = prompt.attachment || (prompt.userImage ? { type: 'image/jpeg', data: prompt.userImage, name: 'Uploaded Image' } : null);
 
     const AI_TOOLS = [
         { name: 'ChatGPT', url: 'https://chatgpt.com', icon: MessageCircle, color: '#10a37f' },
@@ -198,9 +282,8 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
                                     ))}
                                 </div>
 
-                                <button className="btn btn-primary copy-btn" onClick={handleCopy}>
-                                    <Copy size={16} />
-                                    {hasVariables ? 'Copy Filled' : 'Copy'}
+                                <button className="btn btn-primary copy-btn icon-only" onClick={handleCopy} title={hasVariables ? 'Copy Filled' : 'Copy'}>
+                                    <Copy size={20} />
                                 </button>
                             </div>
                         </div>
@@ -212,17 +295,75 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
                         </div>
                     </div>
 
-                    {prompt.userImage && (
-                        <div className="detail-section">
-                            <h3 className="section-title">
+                    <div className="detail-section">
+                        <h3 className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <ImageIcon size={20} />
-                                Uploaded Image
-                            </h3>
-                            <div className="example-image-container">
-                                <img src={prompt.userImage} alt="User Uploaded" className="example-image" />
+                                Attachment
+                            </span>
+                            {!displayAttachment && (
+                                <label className="btn btn-ghost sm" style={{ cursor: 'pointer', fontSize: '0.8rem' }}>
+                                    + Add File
+                                    <input type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
+                                </label>
+                            )}
+                        </h3>
+
+                        {displayAttachment ? (
+                            <div className="example-image-container" style={{ position: 'relative', background: 'var(--bg-secondary)', padding: displayAttachment.type.startsWith('image/') ? '0' : '1rem', borderRadius: '8px' }}>
+                                {displayAttachment.type.startsWith('image/') ? (
+                                    <img src={displayAttachment.data} alt="Attachment" className="example-image" />
+                                ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ width: '60px', height: '60px', background: 'var(--border-subtle)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span style={{ fontWeight: 'bold' }}>FILE</span>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontWeight: '500' }}>{displayAttachment.name}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                {displayAttachment.size ? `${(displayAttachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
+                                            </div>
+                                            <a href={displayAttachment.data} download={displayAttachment.name} style={{ fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'underline', marginTop: '0.25rem', display: 'inline-block' }}>
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button
+                                    className="btn btn-ghost icon-only"
+                                    onClick={handleRemoveAttachment}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '0.5rem',
+                                        right: '0.5rem',
+                                        background: 'rgba(0,0,0,0.5)',
+                                        color: 'white',
+                                        borderRadius: '50%'
+                                    }}
+                                    title="Remove Image"
+                                >
+                                    <X size={16} />
+                                </button>
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div style={{
+                                border: '2px dashed var(--border-subtle)',
+                                borderRadius: 'var(--radius-lg)',
+                                padding: '2rem',
+                                textAlign: 'center',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.9rem'
+                            }}>
+                                <p>No reference image attached.</p>
+                                <label style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: '500' }}>
+                                    Upload one
+                                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                                </label>
+                                &nbsp;to keep it handy.
+                            </div>
+                        )}
+                    </div>
 
                     <div className="detail-section">
                         <h3 className="section-title">
