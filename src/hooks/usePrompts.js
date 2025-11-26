@@ -327,17 +327,308 @@ const INITIAL_PROMPTS = [
         tags: ['learning', 'meta-prompting', 'masterclass'],
         isFavorite: false,
         createdAt: new Date().toISOString()
+    },
+    // --- NANO BANANA PRO PROMPTS ---
+    {
+        id: '32',
+        title: 'Wide Quote Card',
+        content: 'A prompt for generating a wide quote card featuring a famous person’s portrait, with a brown background, light-gold serif quote text, and layout where text occupies two-thirds and the person one-third. The quote text and author are parameterized for reuse.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['quote', 'card', 'portrait'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '33',
+        title: 'Watercolor Map of Germany',
+        content: 'A German prompt to generate a watercolor-style map of Germany where all federal states are labeled in ballpoint pen, useful for educational or infographic-style maps.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['map', 'watercolor', 'germany'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '34',
+        title: 'Train-Ad Book Advertisement',
+        content: 'A detailed Japanese prompt for generating a 16:9 business-book-style advertisement featuring a specific book image with Japanese copy points.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['advertisement', 'book', 'japanese'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '35',
+        title: 'Dream Diary with Kirby',
+        content: 'A cute prompt for a dreamy diary-style illustration of a pink Kirby sleeping on a star, blowing rainbow bubbles amid pastel clouds and candy.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['kirby', 'cute', 'illustration'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '36',
+        title: 'Otaku Room Mirror Selfie',
+        content: 'A very detailed Nano Banana prompt describing a female mirror selfie in a blue-toned otaku computer corner, with full specifications for character, environment, lighting, camera, and negative prompts.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['selfie', 'otaku', 'room'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '37',
+        title: 'Historical Moment (1994)',
+        content: 'A prompt to create an image of a specific place and time using latitude, longitude and a precise timestamp, ideal for historical reconstructions.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['historical', 'coordinates', 'reconstruction'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '38',
+        title: 'Claymation Day Phases',
+        content: 'A prompt for generating a whimsical claymation-style infographic that explains the phases of the day to a six-year-old, ideal for educational visuals or animated explainers.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['claymation', 'infographic', 'educational'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '39',
+        title: 'F1 VIP Fan Selfie',
+        content: 'An extensive prompt for transforming a user’s selfie into an 8K hyper-realistic photo of them as a stylish F1 fan at a premium automotive event, preserving their real face while changing outfit and setting.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['selfie', 'f1', 'hyper-realistic'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '40',
+        title: 'Professional Studio Portraits',
+        content: 'Transform this image into a premium half-body portrait captured in a professional photography studio, featuring urban casual styling with naturally coordinated poses. Focus on facial close-up with an overall atmosphere that is profound yet gentle.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['portrait', 'studio', 'professional'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '41',
+        title: 'LINE-style Emoji Grid',
+        content: 'A prompt for generating colorful hand-drawn LINE-style chibi emoji portraits arranged in a grid with humorous text, ideal for chat stickers or social media reactions.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['emoji', 'portrait', 'grid'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '42',
+        title: 'Time-Travel Scene',
+        content: 'A prompt for generating a realistic scene at specific geographic coordinates and historical time, useful for visualizing past events at exact locations.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['time-travel', 'historical', 'scene'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '43',
+        title: 'Isometric Landmark Schematic',
+        content: 'A simple template prompt for creating hand-drawn isometric diagrams of landmarks in a square format, useful for stylized maps or educational graphics.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['isometric', 'landmark', 'schematic'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '44',
+        title: 'Cinematic B&W Portrait',
+        content: 'A structured prompt for creating a dramatic black-and-white, photorealistic portrait of a serious young woman in a suit, with clearly defined style and camera details.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['portrait', 'black-and-white', 'cinematic'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '45',
+        title: 'Fridge-Scan Recipe Infographic',
+        content: 'A conceptual prompt for turning the contents of a fridge into a simple step-by-step recipe infographic, useful for cooking or food content.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['recipe', 'infographic', 'fridge'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '46',
+        title: 'Knolling-Style Flat-Lay',
+        content: 'A detailed prompt for turning any object into an ultra-realistic knolling-style 8K flat-lay image with labeled disassembled parts.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['knolling', 'flat-lay', 'photo'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '47',
+        title: 'Swiss Alpine Winter Portrait',
+        content: 'A rich prompt for an ultra-detailed DSLR-style portrait of a young man in a snowy Swiss alpine village during winter evening, with cinematic lighting and shallow depth of field.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['portrait', 'winter', 'alpine'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '48',
+        title: 'Marvel-Style Comic Storyboard',
+        content: 'A prompt for generating vertical-format comic storyboards in vibrant Marvel style, featuring a red-caped heroine rescuing people in a neon-lit futuristic city with a text box about Nano Banana Pro.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['comic', 'storyboard', 'marvel'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '49',
+        title: 'Sketchnote Artist',
+        content: 'Create visual summaries like a seasoned Sketchnote artist. This shortcut distills any text into clean, hand-drawn diagrams, ensuring your audience grasps complex ideas instantly. Achieve effortless clarity.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['sketchnote', 'diagram', 'visual'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '50',
+        title: 'Cinematic Rooftop Portrait',
+        content: 'A detailed prompt to generate a hyperrealistic vertical 8K cinematic shot of the man from the attached photos, sitting on a skyscraper edge during golden hour with shallow depth of field and strong bokeh.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['portrait', 'cinematic', 'rooftop'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '51',
+        title: 'Cartoon Version',
+        content: 'A prompt for converting a provided image into a coherent cartoon-style version while preserving its structure and details.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['cartoon', 'conversion', 'style'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '52',
+        title: 'Technical Exploded View',
+        content: 'A reusable prompt template for creating labeled exploded view diagrams of any subject in a square format, useful for product breakdowns or educational visuals.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['diagram', 'exploded-view', 'technical'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '53',
+        title: 'Futuristic Age-Checker',
+        content: 'A long, detailed prompt for creating a hyper-realistic portrait infographic that analyzes facial aging factors with overlays and labeled percentages, styled like a premium cosmetic-tech ad.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['infographic', 'portrait', 'futuristic'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '54',
+        title: 'Manga-Style Comic Generator',
+        content: 'A prompt that tells Nano Banana Pro to act like a Japanese manga artist with a Demon Slayer–like hand-drawn style and convert supplied content into Chinese-language comic panels.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['manga', 'comic', 'storyboard'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '55',
+        title: 'Filming Setup Visualization',
+        content: 'A prompt to generate a realistic diagram-like image showing camera and lighting placement for filming a given scene, with elements clearly labeled.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['filming', 'setup', 'visualization'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '56',
+        title: 'Vintage Engineering Diagram',
+        content: 'A concise Chinese prompt instructing Nano Banana Pro to create a retro-style engineering exploded diagram of the Zhuge repeating crossbow, with all labels in Chinese.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['vintage', 'engineering', 'diagram'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '57',
+        title: 'Vintage Cookbook Illustration',
+        content: 'A prompt for transforming a food photo into a hand-drawn vintage cookbook recipe page with labeled ingredients and handwritten text, great for cozy food content.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['recipe', 'illustration', 'vintage'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '58',
+        title: 'IllustrateX',
+        content: 'Use Nano Banana to turn an article into a series of easy-to-understand images.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['illustration', 'article', 'images'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '59',
+        title: 'Cinematic Multi-Panel Sequence',
+        content: 'A short prompt for generating a cinematic multi-panel widescreen sequence illustrating an imaginative script from the novel IT.',
+        category: 'Images',
+        source: 'Nano Banana',
+        tags: ['cinematic', 'sequence', 'it'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '60',
+        title: 'Editorial Denim Portrait',
+        content: 'A JSON-style prompt for creating an 8K editorial fashion portrait of a person in a denim outfit and shearling jacket, while keeping their face identical to the reference photo.',
+        category: 'Photos',
+        source: 'Nano Banana',
+        tags: ['portrait', 'fashion', 'editorial'],
+        isFavorite: false,
+        createdAt: new Date().toISOString()
     }
 ];
 
 export const usePrompts = () => {
     const [prompts, setPrompts] = useState(() => {
-        const saved = localStorage.getItem('prompts_v5');
+        const saved = localStorage.getItem('prompts_v6');
         return saved ? JSON.parse(saved) : INITIAL_PROMPTS;
     });
 
     useEffect(() => {
-        localStorage.setItem('prompts_v5', JSON.stringify(prompts));
+        localStorage.setItem('prompts_v6', JSON.stringify(prompts));
     }, [prompts]);
 
     const addPrompt = (prompt) => {
