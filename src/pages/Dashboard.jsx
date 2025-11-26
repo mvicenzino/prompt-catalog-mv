@@ -8,11 +8,18 @@ import { usePrompts } from '../hooks/usePrompts';
 const Dashboard = () => {
     const { category } = useParams();
     const location = useLocation();
-    const { prompts, toggleFavorite } = usePrompts();
+    const { prompts, toggleFavorite, deletePrompt } = usePrompts();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrompt, setSelectedPrompt] = useState(null);
 
     const isFavoritesPage = location.pathname === '/favorites';
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this prompt?')) {
+            deletePrompt(id);
+            setSelectedPrompt(null);
+        }
+    };
 
     const filteredPrompts = prompts.filter(prompt => {
         // Filter by Category
@@ -68,6 +75,7 @@ const Dashboard = () => {
                 prompt={selectedPrompt}
                 isOpen={!!selectedPrompt}
                 onClose={() => setSelectedPrompt(null)}
+                onDelete={() => handleDelete(selectedPrompt.id)}
             />
         </div>
     );

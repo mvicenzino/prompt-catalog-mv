@@ -9,10 +9,11 @@ import {
     PenTool,
     Star,
     PlusCircle,
-    Layers
+    Layers,
+    X
 } from 'lucide-react';
 
-const Sidebar = ({ onAddPrompt }) => {
+const Sidebar = ({ onAddPrompt, isOpen, onClose }) => {
     const navItems = [
         { icon: LayoutGrid, label: 'All Prompts', path: '/' },
         { icon: Layers, label: 'Collections', path: '/collections' },
@@ -25,12 +26,19 @@ const Sidebar = ({ onAddPrompt }) => {
     ];
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
+        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+            <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="logo">
                     <img src="/logo.svg" alt="PromptPal Logo" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
                     <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
                 </div>
+                <button
+                    className="btn btn-ghost icon-only mobile-close-btn"
+                    onClick={onClose}
+                    style={{ display: 'none' }}
+                >
+                    <X size={20} />
+                </button>
             </div>
 
             <nav className="sidebar-nav">
@@ -39,6 +47,7 @@ const Sidebar = ({ onAddPrompt }) => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        onClick={onClose}
                     >
                         <item.icon size={20} />
                         <span>{item.label}</span>

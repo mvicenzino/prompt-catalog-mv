@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Copy, Twitter, MessageCircle, User, Image as ImageIcon, Sparkles, Brain, Zap } from 'lucide-react';
+import { X, Copy, Twitter, MessageCircle, User, Image as ImageIcon, Sparkles, Brain, Zap, Trash2 } from 'lucide-react';
 
-const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
+const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete }) => {
     const [variables, setVariables] = useState({});
 
     // Reset variables when prompt changes
@@ -144,9 +144,14 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
                         </div>
                         <h2 className="detail-title">{prompt.title}</h2>
                     </div>
-                    <button className="btn btn-ghost icon-only" onClick={onClose}>
-                        <X size={24} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-ghost icon-only" onClick={onDelete} title="Delete Prompt" style={{ color: '#ef4444' }}>
+                            <Trash2 size={20} />
+                        </button>
+                        <button className="btn btn-ghost icon-only" onClick={onClose}>
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="detail-content-scroll">
