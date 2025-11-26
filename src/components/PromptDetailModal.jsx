@@ -1,7 +1,23 @@
-import React, { useState } from 'react';
-import { X, Copy, Twitter, MessageCircle, User, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Copy, Twitter, MessageCircle, User, Image as ImageIcon, Sparkles, Brain, Zap } from 'lucide-react';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
+    const [variables, setVariables] = useState({});
+
+    // Reset variables when prompt changes
+    useEffect(() => {
+        if (prompt) {
+            const foundVars = {};
+            const regex = /\[(.*?)\]/g;
+            let match;
+            while ((match = regex.exec(prompt.content)) !== null) {
+                // Use the content inside brackets as the key
+                foundVars[match[1]] = '';
+            }
+            setVariables(foundVars);
+        }
+    }, [prompt]);
+
     if (!isOpen || !prompt) return null;
 
     const getSourceIcon = (source) => {
@@ -12,9 +28,41 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
         }
     };
 
+    const getFilledContent = () => {
+        let content = prompt.content;
+        Object.entries(variables).forEach(([key, value]) => {
+            if (value.trim()) {
+                // Escape special characters in key for regex
+                const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                content = content.replace(new RegExp(`\\[${escapedKey}\\]`, 'g'), value);
+            }
+        });
+        return content;
+    };
+
+    const filledContent = getFilledContent();
+
     const handleCopy = () => {
-        navigator.clipboard.writeText(prompt.content);
+        navigator.clipboard.writeText(filledContent);
         // TODO: Show toast
+    };
+
+    const handleVariableChange = (key, value) => {
+        setVariables(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
+
+    const handleOpenAI = (toolUrl, toolName) => {
+        navigator.clipboard.writeText(filledContent);
+
+        let finalUrl = toolUrl;
+        if (toolName === 'Perplexity') {
+            finalUrl += encodeURIComponent(filledContent);
+        }
+
+        window.open(finalUrl, '_blank');
     };
 
     // Real examples based on category/tags
@@ -52,6 +100,15 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
     };
 
     const examples = getExamples();
+    const hasVariables = Object.keys(variables).length > 0;
+
+    const AI_TOOLS = [
+        { name: 'ChatGPT', url: 'https://chat.openai.com', icon: MessageCircle, color: '#10a37f' },
+        { name: 'Gemini', url: 'https://gemini.google.com/app', icon: Sparkles, color: '#4E86F5' },
+        { name: 'Claude', url: 'https://claude.ai/new', icon: Brain, color: '#d97757' },
+        { name: 'Perplexity', url: 'https://www.perplexity.ai/?q=', icon: Zap, color: '#22b8cf' },
+        { name: 'Midjourney', url: 'https://discord.com/channels/@me', icon: ImageIcon, color: '#5865F2' },
+    ];
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -74,12 +131,51 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
 
                 <div className="detail-content-scroll">
                     <div className="detail-section">
+
+                        {hasVariables && (
+                            <div className="variables-section" style={{ marginBottom: '1.5rem' }}>
+                                <h3 className="text-sm font-semibold text-secondary mb-3">Fill Variables</h3>
+                                <div className="variables-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                                    {Object.keys(variables).map(variable => (
+                                        <div key={variable} className="form-group">
+                                            <label className="text-xs text-secondary mb-1 block" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                {variable}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                placeholder={`Enter ${variable}...`}
+                                                value={variables[variable]}
+                                                onChange={(e) => handleVariableChange(variable, e.target.value)}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="prompt-display">
-                            <p className="prompt-text">{prompt.content}</p>
-                            <div className="prompt-actions">
+                            <p className="prompt-text">{filledContent}</p>
+                            <div className="prompt-actions" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div className="ai-tools" style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <span className="text-xs text-secondary" style={{ alignSelf: 'center', marginRight: '0.5rem' }}>Run with:</span>
+                                    {AI_TOOLS.map(tool => (
+                                        <button
+                                            key={tool.name}
+                                            className="btn btn-ghost icon-only sm tool-btn"
+                                            onClick={() => handleOpenAI(tool.url, tool.name)}
+                                            title={`Copy & Open in ${tool.name}`}
+                                            style={{ color: tool.color, borderColor: 'var(--border-subtle)', border: '1px solid' }}
+                                        >
+                                            <tool.icon size={16} />
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <button className="btn btn-primary copy-btn" onClick={handleCopy}>
                                     <Copy size={16} />
-                                    Copy Prompt
+                                    {hasVariables ? 'Copy Filled' : 'Copy'}
                                 </button>
                             </div>
                         </div>

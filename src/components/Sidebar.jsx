@@ -8,12 +8,14 @@ import {
     Code,
     PenTool,
     Star,
-    PlusCircle
+    PlusCircle,
+    Layers
 } from 'lucide-react';
 
 const Sidebar = ({ onAddPrompt }) => {
     const navItems = [
         { icon: LayoutGrid, label: 'All Prompts', path: '/' },
+        { icon: Layers, label: 'Collections', path: '/collections' },
         { icon: Camera, label: 'Photos', path: '/category/photos' },
         { icon: Smartphone, label: 'Apps', path: '/category/apps' },
         { icon: Image, label: 'Images', path: '/category/images' },
