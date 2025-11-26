@@ -10,6 +10,7 @@ const INITIAL_PROMPTS = [
         source: 'Midjourney',
         tags: ['cyberpunk', 'portrait', '8k'],
         isFavorite: true,
+        exampleImage: '/examples/images/cyberpunk_warrior.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -20,6 +21,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['retouch', 'beauty', 'realistic', 'viral'],
         isFavorite: false,
+        exampleImage: '/examples/photos/natural_beauty.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -30,6 +32,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['cinematic', 'portrait', 'photography', 'popular'],
         isFavorite: true,
+        exampleImage: '/examples/photos/cinematic_portrait.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -40,6 +43,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['fashion', 'editorial', 'luxury', 'trending'],
         isFavorite: false,
+        exampleImage: '/examples/photos/high_fashion.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -50,6 +54,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['vintage', 'polaroid', 'retro', 'creative'],
         isFavorite: false,
+        exampleImage: '/examples/images/vintage_polaroid.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -60,6 +65,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['artistic', 'double-exposure', 'surreal'],
         isFavorite: true,
+        exampleImage: '/examples/images/double_exposure.png',
         createdAt: new Date().toISOString()
     },
     {
@@ -70,6 +76,7 @@ const INITIAL_PROMPTS = [
         source: 'X',
         tags: ['cyberpunk', 'neon', 'surreal', 'viral'],
         isFavorite: false,
+        exampleImage: '/examples/images/neon_surrealism.png',
         createdAt: new Date().toISOString()
     },
     // NEW USER PROMPTS - IMAGES
@@ -325,12 +332,12 @@ const INITIAL_PROMPTS = [
 
 export const usePrompts = () => {
     const [prompts, setPrompts] = useState(() => {
-        const saved = localStorage.getItem('prompts_v3');
+        const saved = localStorage.getItem('prompts_v5');
         return saved ? JSON.parse(saved) : INITIAL_PROMPTS;
     });
 
     useEffect(() => {
-        localStorage.setItem('prompts_v3', JSON.stringify(prompts));
+        localStorage.setItem('prompts_v5', JSON.stringify(prompts));
     }, [prompts]);
 
     const addPrompt = (prompt) => {

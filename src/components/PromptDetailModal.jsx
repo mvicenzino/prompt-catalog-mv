@@ -58,8 +58,24 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
         navigator.clipboard.writeText(filledContent);
 
         let finalUrl = toolUrl;
-        if (toolName === 'Perplexity') {
-            finalUrl += encodeURIComponent(filledContent);
+        const encodedPrompt = encodeURIComponent(filledContent);
+
+        switch (toolName) {
+            case 'Perplexity':
+                finalUrl = `https://www.perplexity.ai/?q=${encodedPrompt}`;
+                break;
+            case 'Claude':
+                finalUrl = `https://claude.ai/new?q=${encodedPrompt}`;
+                break;
+            case 'ChatGPT':
+                finalUrl = `https://chatgpt.com/?q=${encodedPrompt}`;
+                break;
+            case 'Gemini':
+                // Note: Gemini variable support via URL is experimental/inconsistent
+                finalUrl = `https://gemini.google.com/app?text=${encodedPrompt}`;
+                break;
+            default:
+                break;
         }
 
         window.open(finalUrl, '_blank');
@@ -68,6 +84,10 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
     // Real examples based on category/tags
     const getExamples = () => {
         const examples = [];
+
+        if (prompt.exampleImage) {
+            examples.push(prompt.exampleImage);
+        }
 
         if (prompt.tags?.includes('cyberpunk')) {
             examples.push(
@@ -103,10 +123,10 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
     const hasVariables = Object.keys(variables).length > 0;
 
     const AI_TOOLS = [
-        { name: 'ChatGPT', url: 'https://chat.openai.com', icon: MessageCircle, color: '#10a37f' },
+        { name: 'ChatGPT', url: 'https://chatgpt.com', icon: MessageCircle, color: '#10a37f' },
         { name: 'Gemini', url: 'https://gemini.google.com/app', icon: Sparkles, color: '#4E86F5' },
         { name: 'Claude', url: 'https://claude.ai/new', icon: Brain, color: '#d97757' },
-        { name: 'Perplexity', url: 'https://www.perplexity.ai/?q=', icon: Zap, color: '#22b8cf' },
+        { name: 'Perplexity', url: 'https://www.perplexity.ai', icon: Zap, color: '#22b8cf' },
         { name: 'Midjourney', url: 'https://discord.com/channels/@me', icon: ImageIcon, color: '#5865F2' },
     ];
 
@@ -186,6 +206,18 @@ const PromptDetailModal = ({ prompt, isOpen, onClose }) => {
                             ))}
                         </div>
                     </div>
+
+                    {prompt.userImage && (
+                        <div className="detail-section">
+                            <h3 className="section-title">
+                                <ImageIcon size={20} />
+                                Uploaded Image
+                            </h3>
+                            <div className="example-image-container">
+                                <img src={prompt.userImage} alt="User Uploaded" className="example-image" />
+                            </div>
+                        </div>
+                    )}
 
                     <div className="detail-section">
                         <h3 className="section-title">

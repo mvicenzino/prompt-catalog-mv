@@ -28,8 +28,8 @@ const Sidebar = ({ onAddPrompt }) => {
         <aside className="sidebar">
             <div className="sidebar-header">
                 <div className="logo">
-                    <div className="logo-icon">P</div>
-                    <span className="logo-text">Prompt<span className="text-accent">Catalog</span></span>
+                    <img src="/logo.svg" alt="PromptPal Logo" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
+                    <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
                 </div>
             </div>
 
@@ -52,7 +52,7 @@ const Sidebar = ({ onAddPrompt }) => {
                     <span>New Prompt</span>
                 </button>
             </div>
-        </aside>
+        </aside >
     );
 };
 

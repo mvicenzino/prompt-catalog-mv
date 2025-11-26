@@ -4,6 +4,7 @@ import { usePrompts } from '../hooks/usePrompts';
 
 const AddPromptModal = ({ isOpen, onClose }) => {
     const { addPrompt } = usePrompts();
+    const [image, setImage] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -14,14 +15,27 @@ const AddPromptModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         addPrompt({
             ...formData,
-            tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
+            tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+            userImage: image
         });
         onClose();
         setFormData({ title: '', content: '', category: 'Images', source: 'Other', tags: '' });
+        setImage(null);
     };
 
     return (
@@ -53,6 +67,23 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                             rows={4}
                         />
                     </div>
+
+                    <div className="form-group">
+                        <label>Upload Image (Optional)</label>
+                        <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp, image/gif"
+                            onChange={handleImageUpload}
+                            className="input"
+                            style={{ padding: '0.5rem' }}
+                        />
+                        {image && (
+                            <div style={{ marginTop: '0.5rem', width: '100px', height: '100px', overflow: 'hidden', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                                <img src={image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                        )}
+                    </div>
+
                     <div className="form-row">
                         <div className="form-group">
                             <label>Category</label>
