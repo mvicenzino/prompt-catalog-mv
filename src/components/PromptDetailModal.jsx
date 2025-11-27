@@ -70,8 +70,9 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 1024 * 1024) {
-                alert('File is too large. Please select a file under 1MB.');
+            // Check size limit (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File is too large. Please select a file under 10MB.');
                 e.target.value = '';
                 return;
             }

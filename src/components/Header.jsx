@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell } from 'lucide-react';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = ({ onSearch }) => {
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const notificationRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setIsNotificationOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
         <header className="header">
             <div className="search-bar">
@@ -14,9 +32,19 @@ const Header = ({ onSearch }) => {
                 />
             </div>
             <div className="header-actions">
-                <button className="btn btn-ghost icon-only">
-                    <Bell size={20} />
-                </button>
+                <div className="notification-container" ref={notificationRef} style={{ position: 'relative' }}>
+                    <button
+                        className={`btn btn-ghost icon-only ${isNotificationOpen ? 'active' : ''}`}
+                        onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                    >
+                        <Bell size={20} />
+                        <span className="notification-badge" />
+                    </button>
+                    <NotificationDropdown
+                        isOpen={isNotificationOpen}
+                        onClose={() => setIsNotificationOpen(false)}
+                    />
+                </div>
                 <div className="avatar">M</div>
             </div>
         </header>
