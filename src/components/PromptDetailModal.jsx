@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, MessageCircle, Sparkles, Brain, Zap, Twitter, User } from 'lucide-react';
+import { X, Copy, Trash2, ImageIcon, MessageCircle, Sparkles, Brain, Zap, Twitter, User, Check } from 'lucide-react';
 import { usePrompts } from '../hooks/usePrompts';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
@@ -56,8 +56,12 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         }
     };
 
+    const [isCopied, setIsCopied] = useState(false);
+
     const handleCopy = () => {
         navigator.clipboard.writeText(filledContent);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     const handleVariableChange = (key, value) => {
@@ -259,8 +263,23 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                                     ))}
                                 </div>
 
-                                <button className="btn btn-primary copy-btn icon-only" onClick={handleCopy} title={hasVariables ? 'Copy Filled' : 'Copy'}>
-                                    <Copy size={20} />
+                                <button
+                                    className={`btn btn-primary copy-btn ${isCopied ? 'success' : ''}`}
+                                    onClick={handleCopy}
+                                    title={hasVariables ? 'Copy Filled' : 'Copy'}
+                                    style={{ minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                >
+                                    {isCopied ? (
+                                        <>
+                                            <Check size={20} />
+                                            <span>Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy size={20} />
+                                            <span className="hide-mobile">Copy</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

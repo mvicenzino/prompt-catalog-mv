@@ -1,5 +1,5 @@
-import React from 'react';
-import { Copy, Twitter, MessageCircle, User, Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { Copy, Twitter, MessageCircle, User, Star, Check } from 'lucide-react';
 
 const PromptCard = ({ prompt, onToggleFavorite }) => {
     const getSourceIcon = (source) => {
@@ -10,10 +10,13 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
         }
     };
 
+    const [isCopied, setIsCopied] = useState(false);
+
     const handleCopy = (e) => {
         e.stopPropagation();
         navigator.clipboard.writeText(prompt.content);
-        // TODO: Show toast
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
     };
 
     return (
@@ -34,8 +37,8 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
                     >
                         <Star size={16} fill={prompt.isFavorite ? "currentColor" : "none"} />
                     </button>
-                    <button className="btn btn-ghost icon-only sm" onClick={handleCopy} title="Copy prompt">
-                        <Copy size={16} />
+                    <button className="btn btn-ghost icon-only sm" onClick={handleCopy} title={isCopied ? "Copied!" : "Copy prompt"}>
+                        {isCopied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
                     </button>
                 </div>
             </div>

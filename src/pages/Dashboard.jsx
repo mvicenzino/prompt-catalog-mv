@@ -8,7 +8,7 @@ import { usePrompts } from '../hooks/usePrompts';
 const Dashboard = () => {
     const { category } = useParams();
     const location = useLocation();
-    const { prompts, toggleFavorite, deletePrompt, updatePrompt } = usePrompts();
+    const { prompts, toggleFavorite, deletePrompt, updatePrompt, isLoaded } = usePrompts();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrompt, setSelectedPrompt] = useState(null);
 
@@ -43,6 +43,14 @@ const Dashboard = () => {
         if (category) return `${category.charAt(0).toUpperCase() + category.slice(1)} Prompts`;
         return 'All Prompts';
     };
+
+    if (!isLoaded) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div className="text-secondary">Loading prompts...</div>
+            </div>
+        );
+    }
 
     return (
         <div>

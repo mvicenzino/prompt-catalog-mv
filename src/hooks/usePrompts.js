@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { get, set } from 'idb-keyval';
+
+const DB_KEY = 'prompts_v6';
 
 const INITIAL_PROMPTS = [
     // --- IMAGES & PHOTOS ---
@@ -622,14 +625,46 @@ const INITIAL_PROMPTS = [
 ];
 
 export const usePrompts = () => {
-    const [prompts, setPrompts] = useState(() => {
-        const saved = localStorage.getItem('prompts_v6');
-        return saved ? JSON.parse(saved) : INITIAL_PROMPTS;
-    });
+    const [prompts, setPrompts] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
+    // Initialize DB on mount
     useEffect(() => {
-        localStorage.setItem('prompts_v6', JSON.stringify(prompts));
-    }, [prompts]);
+        const initDB = async () => {
+            try {
+                const saved = await get(DB_KEY);
+                if (saved) {
+                    setPrompts(saved);
+                } else {
+                    // Try to migrate from localStorage if exists
+                    const localSaved = localStorage.getItem(DB_KEY);
+                    if (localSaved) {
+                        const parsed = JSON.parse(localSaved);
+                        setPrompts(parsed);
+                        await set(DB_KEY, parsed);
+                        localStorage.removeItem(DB_KEY); // Clean up
+                    } else {
+                        setPrompts(INITIAL_PROMPTS);
+                        await set(DB_KEY, INITIAL_PROMPTS);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load prompts:', error);
+                setPrompts(INITIAL_PROMPTS);
+            } finally {
+                setIsLoaded(true);
+            }
+        };
+
+        initDB();
+    }, []);
+
+    // Sync to DB whenever prompts change
+    useEffect(() => {
+        if (isLoaded) {
+            set(DB_KEY, prompts).catch(err => console.error('Failed to save prompts:', err));
+        }
+    }, [prompts, isLoaded]);
 
     const addPrompt = (prompt) => {
         const newPrompt = {
@@ -638,24 +673,24 @@ export const usePrompts = () => {
             createdAt: new Date().toISOString(),
             isFavorite: false
         };
-        setPrompts([newPrompt, ...prompts]);
+        setPrompts(prev => [newPrompt, ...prev]);
     };
 
     const toggleFavorite = (id) => {
-        setPrompts(prompts.map(p =>
+        setPrompts(prev => prev.map(p =>
             p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
         ));
     };
 
     const deletePrompt = (id) => {
-        setPrompts(prompts.filter(p => p.id !== id));
+        setPrompts(prev => prev.filter(p => p.id !== id));
     };
 
     const updatePrompt = (updatedPrompt) => {
-        setPrompts(prompts.map(p =>
+        setPrompts(prev => prev.map(p =>
             p.id === updatedPrompt.id ? updatedPrompt : p
         ));
     };
 
-    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt };
+    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt, isLoaded };
 };
