@@ -6,6 +6,7 @@ import { usePrompts } from '../hooks/usePrompts';
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const [variables, setVariables] = useState({});
     const [filledContent, setFilledContent] = useState('');
+    const [isCopied, setIsCopied] = useState(false);
 
     // Reset variables and set initial filled content when prompt changes
     useEffect(() => {
@@ -55,8 +56,6 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
             default: return <User size={16} />;
         }
     };
-
-    const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = async () => {
         try {
