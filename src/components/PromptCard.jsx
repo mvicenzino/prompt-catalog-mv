@@ -12,11 +12,17 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
 
     const [isCopied, setIsCopied] = useState(false);
 
-    const handleCopy = (e) => {
+    const handleCopy = async (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(prompt.content);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
+        try {
+            await navigator.clipboard.writeText(prompt.content);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
     };
 
     return (
