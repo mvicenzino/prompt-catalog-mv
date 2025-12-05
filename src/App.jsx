@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
 import LandingPage from './pages/LandingPage';
+import ProtectedLayout from './components/ProtectedLayout';
 
 function App() {
     return (
@@ -14,16 +15,7 @@ function App() {
 
             <Route path="/" element={<LandingPage />} />
 
-            <Route path="/app" element={
-                <>
-                    <SignedIn>
-                        <MainLayout />
-                    </SignedIn>
-                    <SignedOut>
-                        <RedirectToSignIn />
-                    </SignedOut>
-                </>
-            }>
+            <Route path="/app" element={<ProtectedLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="category/:category" element={<Dashboard />} />
                 <Route path="favorites" element={<Dashboard />} />
