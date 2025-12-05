@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Bell } from 'lucide-react';
+import { UserButton, SignInButton, SignedIn, SignedOut } from '@clerk/clerk-react';
 import NotificationDropdown from './NotificationDropdown';
 
 const Header = ({ onSearch }) => {
@@ -45,7 +46,14 @@ const Header = ({ onSearch }) => {
                         onClose={() => setIsNotificationOpen(false)}
                     />
                 </div>
-                <div className="avatar">M</div>
+                <SignedIn>
+                    <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+                <SignedOut>
+                    <SignInButton mode="modal">
+                        <button className="btn btn-primary">Sign In</button>
+                    </SignInButton>
+                </SignedOut>
             </div>
         </header>
     );
