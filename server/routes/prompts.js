@@ -21,8 +21,8 @@ router.get('/', authenticateToken, async (req, res) => {
                 // We assume public templates have user_id IS NULL and is_public = true
                 // Note: We need to make sure we are selecting from the same table correctly.
                 const seedQuery = `
-                    INSERT INTO prompts (user_id, title, content, category, source, tags, is_public, created_at)
-                    SELECT $1, title, content, category, source, tags, false, NOW()
+                    INSERT INTO prompts (user_id, title, content, category, source, tags, is_public, attachment, created_at)
+                    SELECT $1, title, content, category, source, tags, false, attachment, NOW()
                     FROM prompts
                     WHERE user_id IS NULL AND is_public = true
                     RETURNING *
