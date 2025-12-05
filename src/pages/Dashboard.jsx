@@ -84,7 +84,10 @@ const Dashboard = () => {
                 isOpen={!!selectedPrompt}
                 onClose={() => setSelectedPrompt(null)}
                 onDelete={() => handleDelete(selectedPrompt.id)}
-                onUpdate={updatePrompt}
+                onUpdate={(updatedPrompt) => {
+                    updatePrompt(updatedPrompt);
+                    setSelectedPrompt(updatedPrompt);
+                }}
             />
         </div>
     );

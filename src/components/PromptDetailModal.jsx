@@ -91,57 +91,24 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
             reader.onload = (event) => {
                 const result = event.target.result;
 
-                if (file.type.startsWith('image/')) {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const MAX_WIDTH = 800;
-                        const MAX_HEIGHT = 800;
+                const attachmentData = {
+                    type: file.type || 'application/octet-stream',
+                    name: file.name,
+                    data: result,
+                    size: file.size
+                };
 
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
+                // If it's an image, we might want to compress or resize it, but for now let's just save it.
+                // The issue might be that onUpdate expects the whole prompt object.
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+                const updatedPrompt = {
+                    ...prompt,
+                    attachment: attachmentData,
+                    userImage: undefined // Clear legacy field if any
+                };
 
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        onUpdate({
-                            ...prompt,
-                            attachment: {
-                                type: file.type,
-                                name: file.name,
-                                data: dataUrl,
-                                size: Math.round((dataUrl.length * 3) / 4)
-                            },
-                            userImage: undefined
-                        });
-                    };
-                    img.src = result;
-                } else {
-                    onUpdate({
-                        ...prompt,
-                        attachment: {
-                            type: file.type || 'application/octet-stream',
-                            name: file.name,
-                            data: result,
-                            size: file.size
-                        },
-                        userImage: undefined
-                    });
-                }
+                // Call onUpdate to save to backend
+                onUpdate(updatedPrompt);
             };
             reader.readAsDataURL(file);
         }
@@ -366,22 +333,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                         )}
                     </div>
 
-                    <div className="detail-section">
-                        <h3 className="section-title">
-                            <ImageIcon size={20} />
-                            Example Outputs
-                        </h3>
-                        <div className="examples-grid">
-                            {examples.map(ex => (
-                                <div
-                                    key={ex.id}
-                                    className="example-image-container"
-                                >
-                                    <img src={ex.url} alt={`Example ${ex.id}`} className="example-image" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>,

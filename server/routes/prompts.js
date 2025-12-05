@@ -77,15 +77,15 @@ router.get('/', authenticateToken, async (req, res) => {
 // Create a prompt
 router.post('/', authenticateToken, requireAuth, async (req, res) => {
     try {
-        const { title, content, category, source, tags, is_public } = req.body;
+        const { title, content, category, source, tags, is_public, attachment } = req.body;
         const userId = req.auth.userId;
 
         const text = `
-            INSERT INTO prompts (user_id, title, content, category, source, tags, is_public)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO prompts (user_id, title, content, category, source, tags, is_public, attachment)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
         `;
-        const values = [userId, title, content, category, source, tags, is_public || false];
+        const values = [userId, title, content, category, source, tags, is_public || false, attachment];
         const result = await query(text, values);
 
         // Return the new prompt with isFavorite = false (default)
@@ -147,7 +147,7 @@ router.put('/:id', authenticateToken, requireAuth, async (req, res) => {
     try {
         const promptId = req.params.id;
         const userId = req.auth.userId;
-        const { title, content, category, source, tags, is_public } = req.body;
+        const { title, content, category, source, tags, is_public, attachment } = req.body;
 
         // Check ownership
         const check = await query('SELECT * FROM prompts WHERE id = $1', [promptId]);
@@ -159,11 +159,11 @@ router.put('/:id', authenticateToken, requireAuth, async (req, res) => {
 
         const text = `
             UPDATE prompts 
-            SET title = $1, content = $2, category = $3, source = $4, tags = $5, is_public = $6
-            WHERE id = $7
+            SET title = $1, content = $2, category = $3, source = $4, tags = $5, is_public = $6, attachment = $7
+            WHERE id = $8
             RETURNING *
         `;
-        const values = [title, content, category, source, tags, is_public, promptId];
+        const values = [title, content, category, source, tags, is_public, attachment, promptId];
         const result = await query(text, values);
 
         const favCheck = await query('SELECT * FROM favorites WHERE user_id = $1 AND prompt_id = $2', [userId, promptId]);
