@@ -143,11 +143,17 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
 
                 const item = new ClipboardItem({ [blob.type]: blob });
                 await navigator.clipboard.write([item]);
+                // Optional: Show a small toast here if we had a toast system
                 console.log('Image copied to clipboard');
             } catch (err) {
-                console.warn('Failed to copy image to clipboard:', err);
-                // Fallback: If we can't copy, maybe we can just download it so user can drag-drop?
-                // Or just silently fail on the image part and let them handle it.
+                console.warn('Failed to copy image to clipboard, falling back to download:', err);
+                // Fallback: Download the image
+                const link = document.createElement('a');
+                link.href = displayAttachment.data;
+                link.download = displayAttachment.name || 'image.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         }
 
