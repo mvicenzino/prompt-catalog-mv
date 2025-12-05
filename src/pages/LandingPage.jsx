@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SignInButton, SignUpButton, useAuth } from '@clerk/clerk-react';
 import { Navigate, Link } from 'react-router-dom';
 import { Sparkles, Zap, Layout, Share2, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -6,6 +6,31 @@ import '../landing.css';
 
 const LandingPage = () => {
     const { isSignedIn } = useAuth();
+    const [scrolled, setScrolled] = useState(false);
+    const observerRef = useRef(null);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    useEffect(() => {
+        observerRef.current = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        const elements = document.querySelectorAll('.section-header, .feature-card');
+        elements.forEach(el => observerRef.current.observe(el));
+
+        return () => observerRef.current.disconnect();
+    }, []);
 
     if (isSignedIn) {
         return <Navigate to="/app" replace />;
@@ -14,12 +39,10 @@ const LandingPage = () => {
     return (
         <div className="landing-page">
             {/* Navigation */}
-            <nav className="landing-nav">
+            <nav className={`landing-nav ${scrolled ? 'scrolled' : ''}`}>
                 <div className="container nav-container">
                     <div className="logo">
-                        <div className="logo-icon">
-                            <Sparkles size={20} color="white" />
-                        </div>
+                        <img src="/logo.svg" alt="PromptPal Logo" style={{ width: '32px', height: '32px', borderRadius: '6px' }} />
                         <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
                     </div>
                     <div className="nav-actions">
@@ -126,7 +149,10 @@ const LandingPage = () => {
             <footer className="landing-footer">
                 <div className="container footer-container">
                     <div className="footer-brand">
-                        <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
+                        <div className="logo" style={{ marginBottom: '1rem' }}>
+                            <img src="/logo.svg" alt="PromptPal Logo" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
+                            <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
+                        </div>
                         <p>&copy; 2024 PromptPal. All rights reserved.</p>
                     </div>
                     <div className="footer-links">
