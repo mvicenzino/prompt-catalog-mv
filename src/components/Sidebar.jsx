@@ -15,14 +15,14 @@ import {
 
 const Sidebar = ({ onAddPrompt, isOpen, onClose }) => {
     const navItems = [
-        { icon: LayoutGrid, label: 'All Prompts', path: '/' },
-        { icon: Layers, label: 'Collections', path: '/collections' },
-        { icon: Camera, label: 'Photos', path: '/category/photos' },
-        { icon: Smartphone, label: 'Apps', path: '/category/apps' },
-        { icon: Image, label: 'Images', path: '/category/images' },
-        { icon: Code, label: 'Coding', path: '/category/coding' },
-        { icon: PenTool, label: 'Writing', path: '/category/writing' },
-        { icon: Star, label: 'Favorites', path: '/favorites' },
+        { icon: LayoutGrid, label: 'All Prompts', path: '/app' },
+        { icon: Layers, label: 'Collections', path: '/app/collections' },
+        { icon: Camera, label: 'Photos', path: '/app/category/photos' },
+        { icon: Smartphone, label: 'Apps', path: '/app/category/apps' },
+        { icon: Image, label: 'Images', path: '/app/category/images' },
+        { icon: Code, label: 'Coding', path: '/app/category/coding' },
+        { icon: PenTool, label: 'Writing', path: '/app/category/writing' },
+        { icon: Star, label: 'Favorites', path: '/app/favorites' },
     ];
 
     return (
