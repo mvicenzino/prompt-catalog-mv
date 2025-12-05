@@ -123,8 +123,34 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         }
     };
 
-    const handleOpenAI = (toolUrl, toolName) => {
+    const handleOpenAI = async (toolUrl, toolName) => {
+        // Copy text content
         navigator.clipboard.writeText(filledContent);
+
+        // Try to copy image to clipboard if it exists and is an image
+        if (displayAttachment && displayAttachment.type.startsWith('image/')) {
+            try {
+                // Fetch the data URL to get a Blob
+                const response = await fetch(displayAttachment.data);
+                const blob = await response.blob();
+
+                // Clipboard API requires specific MIME types
+                // We need to ensure it's a PNG for maximum compatibility, but let's try the original type first if supported
+                // Most browsers support image/png in clipboard
+
+                // If it's not PNG, we might need to convert it (simplified for now: try writing directly)
+                // Note: write() is stricter than writeText()
+
+                const item = new ClipboardItem({ [blob.type]: blob });
+                await navigator.clipboard.write([item]);
+                console.log('Image copied to clipboard');
+            } catch (err) {
+                console.warn('Failed to copy image to clipboard:', err);
+                // Fallback: If we can't copy, maybe we can just download it so user can drag-drop?
+                // Or just silently fail on the image part and let them handle it.
+            }
+        }
+
         const encodedPrompt = encodeURIComponent(filledContent);
         let finalUrl = toolUrl;
 
