@@ -153,7 +153,7 @@ const LandingPage = () => {
                             <img src="/logo.svg" alt="PromptPal Logo" style={{ width: '24px', height: '24px', borderRadius: '4px' }} />
                             <span className="logo-text">Prompt<span className="text-accent">Pal</span></span>
                         </div>
-                        <p>&copy; 2024 PromptPal. All rights reserved.</p>
+                        <p>&copy; 2025 PromptPal. All rights reserved.</p>
                     </div>
                     <div className="footer-links">
                         <a href="#">Privacy</a>
