@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
 import LandingPage from './pages/LandingPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import ProtectedLayout from './components/ProtectedLayout';
 
 function App() {
@@ -14,6 +16,8 @@ function App() {
             <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
 
             <Route path="/" element={<LandingPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
 
             <Route path="/app" element={<ProtectedLayout />}>
                 <Route index element={<Dashboard />} />
