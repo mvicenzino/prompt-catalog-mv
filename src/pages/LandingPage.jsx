@@ -89,23 +89,34 @@ const LandingPage = () => {
                                 <div className="dot green"></div>
                             </div>
                             <div className="card-body">
-                                <div className="prompt-preview">
-                                    <span className="tag">#coding</span>
-                                    <h3>React Component Generator</h3>
-                                    <p>Create a responsive React component with Tailwind CSS...</p>
+                                <div className="prompt-preview animated-preview">
+                                    <div className="typing-container">
+                                        <span className="tag">#coding</span>
+                                        <h3>React Component Generator</h3>
+                                        <p className="typing-text">Create a responsive React component with Tailwind CSS...</p>
+                                    </div>
                                     <div className="btn-row">
-                                        <button className="btn-sm btn-primary">Run with ChatGPT</button>
+                                        <button className="btn-sm btn-primary pulse-btn">
+                                            <Sparkles size={14} style={{ marginRight: '4px' }} />
+                                            Run with ChatGPT
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="visual-card floating-card card-1">
+
+                        {/* Animated Floating Cards */}
+                        <div className="visual-card floating-card card-1 slide-in-1">
                             <CheckCircle2 size={16} color="var(--primary)" />
                             <span>Prompt Saved!</span>
                         </div>
-                        <div className="visual-card floating-card card-2">
+                        <div className="visual-card floating-card card-2 slide-in-2">
                             <Layout size={16} color="#a855f7" />
                             <span>Organized</span>
+                        </div>
+                        <div className="visual-card floating-card card-3 slide-in-3">
+                            <Share2 size={16} color="#22c55e" />
+                            <span>Opening ChatGPT...</span>
                         </div>
                     </div>
                 </div>
@@ -158,7 +169,7 @@ const LandingPage = () => {
                     <div className="footer-links">
                         <a href="#">Privacy</a>
                         <a href="#">Terms</a>
-                        <a href="#">Contact</a>
+                        <a href="mailto:mvicenzino@gmail.com">Contact</a>
                     </div>
                 </div>
             </footer>
