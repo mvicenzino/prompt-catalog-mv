@@ -261,9 +261,10 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                                             className="btn btn-ghost icon-only sm tool-btn"
                                             onClick={() => handleOpenAI(tool.url, tool.name)}
                                             title={`Copy & Open in ${tool.name}`}
+                                            aria-label={`Run with ${tool.name}`}
                                             style={{ color: tool.color, borderColor: 'var(--border-subtle)', border: '1px solid' }}
                                         >
-                                            <tool.icon size={16} />
+                                            <tool.icon size={16} aria-hidden="true" />
                                         </button>
                                     ))}
                                 </div>
