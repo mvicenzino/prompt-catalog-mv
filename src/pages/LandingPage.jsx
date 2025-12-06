@@ -167,8 +167,8 @@ const LandingPage = () => {
                         <p>&copy; 2025 PromptPal. All rights reserved.</p>
                     </div>
                     <div className="footer-links">
-                        <a href="#">Privacy</a>
-                        <a href="#">Terms</a>
+                        <Link to="/privacy">Privacy</Link>
+                        <Link to="/terms">Terms</Link>
                         <a href="mailto:mvicenzino@gmail.com">Contact</a>
                     </div>
                 </div>
