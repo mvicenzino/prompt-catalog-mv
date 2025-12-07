@@ -60,52 +60,63 @@ const LandingPage = () => {
             <header className="hero-section">
                 <div className="container hero-container">
                     <div className="hero-content">
-                        <div className="hero-badge" style={{ background: 'rgba(255, 225, 53, 0.1)', borderColor: 'rgba(255, 225, 53, 0.2)' }}>
-                            <Sparkles size={14} className="text-accent" />
-                            <span className="text-accent">For Creative Families</span>
+                        <div className="hero-badge">
+                            <Zap size={14} />
+                            <span>Supercharge your AI workflow</span>
                         </div>
                         <h1 className="hero-title">
-                            Turn Imagination into <span className="text-gradient">Art</span>,<br />
-                            Showcase on Kidzart.
+                            Master Your <span className="text-gradient">Prompts</span>,<br />
+                            Unleash Creativity.
                         </h1>
                         <p className="hero-subtitle">
-                            The perfect tool for parents and kids to create stunning digital artwork together. Capture every idea and share your gallery with the world.
+                            The ultimate library for managing, organizing, and running your AI prompts.
+                            Stop rewriting the same commands—build your personal catalog today.
                         </p>
                         <div className="hero-cta">
                             <SignUpButton mode="modal">
                                 <button className="btn btn-primary btn-lg">
-                                    Start Creating Together <ArrowRight size={20} />
+                                    Start for Free <ArrowRight size={20} />
                                 </button>
                             </SignUpButton>
-                            <p className="hero-note">Safe & Fun for All Ages</p>
+                            <p className="hero-note">No credit card required</p>
                         </div>
                     </div>
-                    <div className="hero-visual full-width-video">
-                        <div className="visual-card video-card">
-                            <div className="video-wrapper">
-                                {/* Placeholder for the video - using a creative gradient background for now */}
-                                <div className="video-placeholder-content">
-                                    <div className="play-button">
-                                        <div className="play-icon">▶</div>
+                    <div className="hero-visual">
+                        <div className="visual-card main-card">
+                            <div className="card-header">
+                                <div className="dot red"></div>
+                                <div className="dot yellow"></div>
+                                <div className="dot green"></div>
+                            </div>
+                            <div className="card-body">
+                                <div className="prompt-preview animated-preview">
+                                    <div className="typing-container">
+                                        <span className="tag">#coding</span>
+                                        <h3>React Component Generator</h3>
+                                        <p className="typing-text">Create a responsive React component with Tailwind CSS...</p>
                                     </div>
-                                    <div className="video-text">
-                                        <h3>See the Magic Happen</h3>
-                                        <p>Watch how easy it is to create & share</p>
+                                    <div className="btn-row">
+                                        <button className="btn-sm btn-primary pulse-btn">
+                                            <Sparkles size={14} style={{ marginRight: '4px' }} />
+                                            Run with ChatGPT
+                                        </button>
                                     </div>
                                 </div>
-                                {/* Ideally we would place the actual <video> tag here */}
-                                {/* <video src="/path-to-video.mp4" controls poster="/poster.jpg" /> */}
                             </div>
                         </div>
 
-                        {/* Animated Floating Cards - Updated for Art Theme */}
+                        {/* Animated Floating Cards */}
                         <div className="visual-card floating-card card-1 slide-in-1">
-                            <Sparkles size={16} color="var(--accent-primary)" />
-                            <span>Masterpiece Created!</span>
+                            <CheckCircle2 size={16} color="var(--primary)" />
+                            <span>Prompt Saved!</span>
                         </div>
                         <div className="visual-card floating-card card-2 slide-in-2">
-                            <Share2 size={16} color="#a855f7" />
-                            <span>Shared to Kidzart</span>
+                            <Layout size={16} color="#a855f7" />
+                            <span>Organized</span>
+                        </div>
+                        <div className="visual-card floating-card card-3 slide-in-3">
+                            <Share2 size={16} color="#22c55e" />
+                            <span>Opening ChatGPT...</span>
                         </div>
                     </div>
                 </div>
