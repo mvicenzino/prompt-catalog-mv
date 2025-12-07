@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, MessageCircle, Sparkles, Brain, Zap, Twitter, User, Check } from 'lucide-react';
+import { X, Copy, Trash2, ImageIcon, Twitter, User, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { ChatGPTIcon, GeminiIcon, ClaudeIcon, PerplexityIcon, MidjourneyIcon } from './AIIcons';
 import { usePrompts } from '../hooks/usePrompts';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
@@ -61,12 +63,16 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         try {
             await navigator.clipboard.writeText(filledContent);
             setIsCopied(true);
+            toast.success('Copied to clipboard!', {
+                description: 'Prompt is ready to paste',
+                duration: 2000,
+            });
             setTimeout(() => setIsCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);
-            // Still show feedback for user experience if it's just a permission issue in dev
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
+            toast.error('Failed to copy', {
+                description: 'Please try again',
+            });
         }
     };
 
@@ -115,52 +121,54 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     };
 
     const handleRemoveAttachment = () => {
-        if (window.confirm('Remove the attachment?')) {
-            const updatedPrompt = { ...prompt };
-            delete updatedPrompt.attachment;
-            delete updatedPrompt.userImage;
-            onUpdate(updatedPrompt);
-        }
+        toast('Remove attachment?', {
+            action: {
+                label: 'Remove',
+                onClick: () => {
+                    const updatedPrompt = { ...prompt };
+                    delete updatedPrompt.attachment;
+                    delete updatedPrompt.userImage;
+                    onUpdate(updatedPrompt);
+                    toast.success('Attachment removed');
+                }
+            },
+            cancel: {
+                label: 'Cancel',
+            },
+        });
     };
 
-    const handleOpenAI = async (toolUrl, toolName) => {
+    const handleOpenAI = async (tool) => {
+        if (tool.disabled) {
+            toast.info(`${tool.name} coming soon!`, {
+                description: 'Direct prompt passing not yet supported',
+            });
+            return;
+        }
+
         // Copy text content
-        navigator.clipboard.writeText(filledContent);
+        try {
+            await navigator.clipboard.writeText(filledContent);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
 
         // Try to copy image to clipboard if it exists and is an image
         if (displayAttachment && displayAttachment.type.startsWith('image/')) {
             try {
-                // Fetch the data URL to get a Blob
                 const response = await fetch(displayAttachment.data);
                 const blob = await response.blob();
-
-                // Clipboard API requires specific MIME types
-                // We need to ensure it's a PNG for maximum compatibility, but let's try the original type first if supported
-                // Most browsers support image/png in clipboard
-
-                // If it's not PNG, we might need to convert it (simplified for now: try writing directly)
-                // Note: write() is stricter than writeText()
-
                 const item = new ClipboardItem({ [blob.type]: blob });
                 await navigator.clipboard.write([item]);
-                // Optional: Show a small toast here if we had a toast system
-                console.log('Image copied to clipboard');
             } catch (err) {
-                console.warn('Failed to copy image to clipboard, falling back to download:', err);
-                // Fallback: Download the image
-                const link = document.createElement('a');
-                link.href = displayAttachment.data;
-                link.download = displayAttachment.name || 'image.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                console.warn('Failed to copy image to clipboard:', err);
             }
         }
 
         const encodedPrompt = encodeURIComponent(filledContent);
-        let finalUrl = toolUrl;
+        let finalUrl = tool.url;
 
-        switch (toolName) {
+        switch (tool.name) {
             case 'Perplexity':
                 finalUrl = `https://www.perplexity.ai/?q=${encodedPrompt}`;
                 break;
@@ -170,12 +178,14 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
             case 'ChatGPT':
                 finalUrl = `https://chatgpt.com/?q=${encodedPrompt}`;
                 break;
-            case 'Gemini':
-                finalUrl = `https://gemini.google.com/app?text=${encodedPrompt}`;
-                break;
             default:
                 break;
         }
+
+        toast.success(`Opening ${tool.name}...`, {
+            description: 'Prompt copied to clipboard',
+            duration: 2000,
+        });
 
         window.open(finalUrl, '_blank');
     };
@@ -194,11 +204,11 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const displayAttachment = prompt.attachment || (prompt.userImage ? { type: 'image/jpeg', data: prompt.userImage, name: 'Uploaded Image' } : null);
 
     const AI_TOOLS = [
-        { name: 'ChatGPT', url: 'https://chatgpt.com', icon: MessageCircle, color: '#10a37f' },
-        { name: 'Gemini', url: 'https://gemini.google.com/app', icon: Sparkles, color: '#4E86F5' },
-        { name: 'Claude', url: 'https://claude.ai/new', icon: Brain, color: '#d97757' },
-        { name: 'Perplexity', url: 'https://www.perplexity.ai', icon: Zap, color: '#22b8cf' },
-        { name: 'Midjourney', url: 'https://discord.com/channels/@me', icon: ImageIcon, color: '#5865F2' },
+        { name: 'ChatGPT', url: 'https://chatgpt.com', icon: ChatGPTIcon, color: '#10a37f', disabled: false },
+        { name: 'Gemini', url: 'https://gemini.google.com/app', icon: GeminiIcon, color: '#4E86F5', disabled: true },
+        { name: 'Claude', url: 'https://claude.ai/new', icon: ClaudeIcon, color: '#d97757', disabled: false },
+        { name: 'Perplexity', url: 'https://www.perplexity.ai', icon: PerplexityIcon, color: '#22b8cf', disabled: false },
+        { name: 'Midjourney', url: 'https://discord.com/channels/@me', icon: MidjourneyIcon, color: '#5865F2', disabled: true },
     ];
 
     return createPortal(
@@ -258,11 +268,17 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                                     {AI_TOOLS.map(tool => (
                                         <button
                                             key={tool.name}
-                                            className="btn btn-ghost icon-only sm tool-btn"
-                                            onClick={() => handleOpenAI(tool.url, tool.name)}
-                                            title={`Copy & Open in ${tool.name}`}
+                                            className={`btn btn-ghost icon-only sm tool-btn ${tool.disabled ? 'disabled' : ''}`}
+                                            onClick={() => handleOpenAI(tool)}
+                                            title={tool.disabled ? `${tool.name} (Coming Soon)` : `Copy & Open in ${tool.name}`}
                                             aria-label={`Run with ${tool.name}`}
-                                            style={{ color: tool.color, borderColor: 'var(--border-subtle)', border: '1px solid' }}
+                                            style={{
+                                                color: tool.disabled ? 'var(--text-muted)' : tool.color,
+                                                borderColor: 'var(--border-subtle)',
+                                                border: '1px solid',
+                                                opacity: tool.disabled ? 0.5 : 1,
+                                                cursor: tool.disabled ? 'not-allowed' : 'pointer'
+                                            }}
                                         >
                                             <tool.icon size={16} aria-hidden="true" />
                                         </button>

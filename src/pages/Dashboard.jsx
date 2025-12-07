@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import Header from '../components/Header';
 import PromptCard from '../components/PromptCard';
 import PromptDetailModal from '../components/PromptDetailModal';
@@ -15,10 +16,19 @@ const Dashboard = () => {
     const isFavoritesPage = location.pathname === '/favorites';
 
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this prompt?')) {
-            deletePrompt(id);
-            setSelectedPrompt(null);
-        }
+        toast('Delete this prompt?', {
+            action: {
+                label: 'Delete',
+                onClick: () => {
+                    deletePrompt(id);
+                    setSelectedPrompt(null);
+                    toast.success('Prompt deleted');
+                }
+            },
+            cancel: {
+                label: 'Cancel',
+            },
+        });
     };
 
     const filteredPrompts = prompts.filter(prompt => {

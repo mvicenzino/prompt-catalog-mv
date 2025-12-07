@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { usePrompts } from '../hooks/usePrompts';
 
 const MOCK_TRENDING_PROMPTS = [
@@ -54,10 +55,10 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
             tags: prompt.tags,
             source: prompt.source
         });
-        // We could add a toast here in the future
-        if (window.confirm(`Added "${prompt.title}" to your library!`)) {
-            onClose();
-        }
+        toast.success('Added to your library!', {
+            description: prompt.title,
+        });
+        onClose();
     };
 
     return (
