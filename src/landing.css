@@ -163,140 +163,103 @@
     transition: transform 0.5s ease;
 }
 
-.main-card {
-    width: 80%;
-    max-width: 700px;
-    height: 400px;
+.video-card {
+    width: 85%;
+    max-width: 800px;
+    height: 450px;
     left: 50%;
     top: 0;
-    transform: translateX(-50%) rotateX(10deg);
+    transform: translateX(-50%) rotateX(5deg);
     z-index: 2;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, var(--bg-card) 0%, #151518 100%);
+    background: #000;
+    border: 1px solid var(--border-highlight);
 }
 
-.main-card:hover {
+.video-card:hover {
     transform: translateX(-50%) rotateX(0deg) scale(1.02);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
 }
 
-.main-card .card-header {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 1rem;
-    display: flex;
-    gap: 8px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-}
-
-.dot.red {
-    background: #ff5f56;
-}
-
-.dot.yellow {
-    background: #ffbd2e;
-}
-
-.dot.green {
-    background: #27c93f;
-}
-
-.main-card .card-body {
-    padding: 2rem;
-    flex: 1;
+.video-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFE135 100%);
+    /* Fun gradient */
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
 }
 
-/* Add a subtle grid pattern to the card body */
-.main-card .card-body::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
-    pointer-events: none;
+.video-placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+    text-align: center;
 }
 
-.prompt-preview {
-    width: 100%;
-    max-width: 500px;
-    background: var(--bg-input);
-    padding: 1.5rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-subtle);
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+.play-button {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    animation: pulse-border 2s infinite;
 }
 
-.prompt-preview h3 {
-    margin: 0.5rem 0;
-    font-size: 1.2rem;
+.play-button:hover {
+    background: white;
+    transform: scale(1.1);
 }
 
-.prompt-preview p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
+.play-button:hover .play-icon {
+    color: var(--accent-primary);
 }
 
-/* Animation Styles */
-.animated-preview {
-    opacity: 0;
-    animation: fadeIn 0.5s ease forwards 0.5s;
+.play-icon {
+    font-size: 2rem;
+    color: white;
+    margin-left: 5px;
+    /* Visual center adjustment */
+    transition: color 0.3s ease;
 }
 
-.typing-text {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid var(--accent-primary);
-    width: 0;
-    animation: typing 2s steps(40, end) forwards 1s, blink-caret 0.75s step-end infinite;
+.video-text h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.pulse-btn {
-    animation: pulse 2s infinite 3s;
-    /* Starts after typing */
+.video-text p {
+    font-size: 1rem;
+    opacity: 0.9;
 }
 
-.slide-in-1 {
-    opacity: 0;
-    animation: slideInRight 0.5s ease forwards 3.5s;
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
 }
 
-.slide-in-2 {
-    opacity: 0;
-    animation: slideInRight 0.5s ease forwards 4s;
-}
-
-.slide-in-3 {
-    opacity: 0;
-    animation: slideInRight 0.5s ease forwards 4.5s;
-    top: 50%;
-    right: -20px;
-    transform: translateY(-50%) rotate(0deg);
-    border-color: #22c55e;
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-}
-
-.card-3 {
-    top: 50%;
-    right: -40px;
-    transform: translateY(-50%);
-    z-index: 4;
-}
 
 @keyframes typing {
     from {
@@ -581,7 +544,7 @@
         margin-bottom: var(--spacing-lg);
     }
 
-    .main-card {
+    .video-card {
         width: 90%;
         max-width: 600px;
         /* Increased for Tablets */
@@ -591,7 +554,7 @@
     }
 
     /* Disable hover effect on touch devices */
-    .main-card:hover {
+    .video-card:hover {
         transform: translateX(-50%) rotateX(0deg);
     }
 
@@ -621,7 +584,7 @@
         padding-bottom: 40px;
     }
 
-    .main-card {
+    .video-card {
         height: 320px;
     }
 
