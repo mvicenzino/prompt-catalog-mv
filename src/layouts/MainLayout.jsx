@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu, Bell } from 'lucide-react';
+import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/clerk-react';
 import Sidebar from '../components/Sidebar';
 import AddPromptModal from '../components/AddPromptModal';
+import NotificationDropdown from '../components/NotificationDropdown';
 
 const MainLayout = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isMobileNotificationOpen, setIsMobileNotificationOpen] = useState(false);
+    const mobileNotificationRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (mobileNotificationRef.current && !mobileNotificationRef.current.contains(event.target)) {
+                setIsMobileNotificationOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="layout">
@@ -48,7 +66,7 @@ const MainLayout = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '0 1rem',
-                overflow: 'hidden',
+                overflow: 'visible', // Changed from hidden to allow dropdown
                 pointerEvents: 'none' // Prevent blocking clicks
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', pointerEvents: 'auto' }}>
@@ -65,10 +83,28 @@ const MainLayout = () => {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', pointerEvents: 'auto' }}>
-                    <button className="btn btn-ghost icon-only">
-                        <Bell size={20} />
-                    </button>
-                    <div className="avatar" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>M</div>
+                    <div className="notification-container" ref={mobileNotificationRef} style={{ position: 'relative' }}>
+                        <button
+                            className={`btn btn-ghost icon-only ${isMobileNotificationOpen ? 'active' : ''}`}
+                            onClick={() => setIsMobileNotificationOpen(!isMobileNotificationOpen)}
+                        >
+                            <Bell size={20} />
+                            <span className="notification-badge" />
+                        </button>
+                        <NotificationDropdown
+                            isOpen={isMobileNotificationOpen}
+                            onClose={() => setIsMobileNotificationOpen(false)}
+                        />
+                    </div>
+
+                    <SignedIn>
+                        <UserButton afterSignOutUrl="/" />
+                    </SignedIn>
+                    <SignedOut>
+                        <SignInButton mode="modal">
+                            <button className="btn btn-primary sm">Sign In</button>
+                        </SignInButton>
+                    </SignedOut>
                 </div>
             </div>
 

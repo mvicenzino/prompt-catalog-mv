@@ -722,6 +722,10 @@ body {
     .sidebar-overlay {
         display: block !important;
     }
+
+    .header .header-actions {
+        display: none !important;
+    }
 }
 
 /* Notification Dropdown */
