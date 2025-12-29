@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork } from 'lucide-react';
+import { X, Copy, Trash2, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork, ExternalLink, FolderPlus, Layers } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
-import { ChatGPTIcon, GeminiIcon, ClaudeIcon, PerplexityIcon, MidjourneyIcon } from './AIIcons';
+import { ChatGPTIcon, ClaudeIcon, PerplexityIcon } from './AIIcons';
 import { getSourceIcon } from '../utils/sourceIcon';
+import { useCollections } from '../hooks/useCollections';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork }) => {
     const { getToken } = useAuth();
+    const { collections, addPromptToCollection } = useCollections();
     const [variables, setVariables] = useState({});
     const [filledContent, setFilledContent] = useState('');
     const [isCopied, setIsCopied] = useState(false);
@@ -15,6 +17,8 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
     const [isSharing, setIsSharing] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
     const [isForking, setIsForking] = useState(false);
+    const [showMoreTools, setShowMoreTools] = useState(false);
+    const [showCollectionMenu, setShowCollectionMenu] = useState(false);
 
     // Track stat event
     const trackStat = useCallback(async (event) => {
@@ -104,112 +108,43 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
         }));
     };
 
-    const handleFileSelect = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Check size limit (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File is too large. Please select a file under 10MB.');
-                e.target.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const result = event.target.result;
-
-                const attachmentData = {
-                    type: file.type || 'application/octet-stream',
-                    name: file.name,
-                    data: result,
-                    size: file.size
-                };
-
-                // If it's an image, we might want to compress or resize it, but for now let's just save it.
-                // The issue might be that onUpdate expects the whole prompt object.
-
-                const updatedPrompt = {
-                    ...prompt,
-                    attachment: attachmentData,
-                    userImage: undefined // Clear legacy field if any
-                };
-
-                // Call onUpdate to save to backend
-                onUpdate(updatedPrompt);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleRemoveAttachment = () => {
-        toast('Remove attachment?', {
-            action: {
-                label: 'Remove',
-                onClick: () => {
-                    const updatedPrompt = { ...prompt };
-                    delete updatedPrompt.attachment;
-                    delete updatedPrompt.userImage;
-                    onUpdate(updatedPrompt);
-                    toast.success('Attachment removed');
-                }
-            },
-            cancel: {
-                label: 'Cancel',
-            },
-        });
-    };
-
-    const handleOpenAI = async (tool) => {
-        if (tool.disabled) {
-            toast.info(`${tool.name} coming soon!`, {
-                description: 'Direct prompt passing not yet supported',
-            });
-            return;
-        }
-
-        // Copy text content
+    const handleRunInChatGPT = async () => {
+        // Copy text to clipboard as backup
         try {
             await navigator.clipboard.writeText(filledContent);
         } catch (err) {
             console.error('Failed to copy:', err);
         }
 
-        // Try to copy image to clipboard if it exists and is an image
-        if (displayAttachment && displayAttachment.type.startsWith('image/')) {
-            try {
-                const response = await fetch(displayAttachment.data);
-                const blob = await response.blob();
-                const item = new ClipboardItem({ [blob.type]: blob });
-                await navigator.clipboard.write([item]);
-            } catch (err) {
-                console.warn('Failed to copy image to clipboard:', err);
-            }
-        }
-
-        const encodedPrompt = encodeURIComponent(filledContent);
-        let finalUrl = tool.url;
-
-        switch (tool.name) {
-            case 'Perplexity':
-                finalUrl = `https://www.perplexity.ai/?q=${encodedPrompt}`;
-                break;
-            case 'Claude':
-                finalUrl = `https://claude.ai/new?q=${encodedPrompt}`;
-                break;
-            case 'ChatGPT':
-                finalUrl = `https://chatgpt.com/?q=${encodedPrompt}`;
-                break;
-            default:
-                break;
-        }
-
+        const finalUrl = `https://chatgpt.com/?q=${encodeURIComponent(filledContent)}`;
         trackStat('aiLaunch');
-        toast.success(`Opening ${tool.name}...`, {
-            description: 'Prompt copied to clipboard',
+
+        toast.success('Opening ChatGPT...', {
+            description: 'Prompt will be pre-filled',
             duration: 2000,
         });
 
         window.open(finalUrl, '_blank');
+    };
+
+    const handleRunInTool = async (tool) => {
+        // Copy text to clipboard as backup
+        try {
+            await navigator.clipboard.writeText(filledContent);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+
+        const finalUrl = tool.urlBuilder(filledContent);
+        trackStat('aiLaunch');
+
+        toast.success(`Opening ${tool.name}...`, {
+            description: 'Prompt will be pre-filled',
+            duration: 2000,
+        });
+
+        window.open(finalUrl, '_blank');
+        setShowMoreTools(false);
     };
 
     const handleRestoreVersion = (version) => {
@@ -334,16 +269,24 @@ ${prompt.content}
         }
     };
 
+    const handleAddToCollection = async (collectionId) => {
+        await addPromptToCollection(collectionId, prompt.id);
+        const collection = collections.find(c => c.id === collectionId);
+        toast.success(`Added to ${collection?.name || 'collection'}`);
+        setShowCollectionMenu(false);
+    };
+
+    const isInCollection = (collectionId) => {
+        const collection = collections.find(c => c.id === collectionId);
+        return collection?.promptIds?.includes(prompt.id);
+    };
+
     const hasVariables = Object.keys(variables).length > 0;
-    const displayAttachment = prompt.attachment || (prompt.userImage ? { type: 'image/jpeg', data: prompt.userImage, name: 'Uploaded Image' } : null);
     const versions = prompt.versions || [];
 
-    const AI_TOOLS = [
-        { name: 'ChatGPT', url: 'https://chatgpt.com', icon: ChatGPTIcon, color: '#10a37f', disabled: false },
-        { name: 'Gemini', url: 'https://gemini.google.com/app', icon: GeminiIcon, color: '#4E86F5', disabled: true },
-        { name: 'Claude', url: 'https://claude.ai/new', icon: ClaudeIcon, color: '#d97757', disabled: false },
-        { name: 'Perplexity', url: 'https://www.perplexity.ai', icon: PerplexityIcon, color: '#22b8cf', disabled: false },
-        { name: 'Midjourney', url: 'https://discord.com/channels/@me', icon: MidjourneyIcon, color: '#5865F2', disabled: true },
+    const OTHER_TOOLS = [
+        { name: 'Claude', icon: ClaudeIcon, color: '#d97757', urlBuilder: (text) => `https://claude.ai/new?q=${encodeURIComponent(text)}` },
+        { name: 'Perplexity', icon: PerplexityIcon, color: '#22b8cf', urlBuilder: (text) => `https://www.perplexity.ai/?q=${encodeURIComponent(text)}` },
     ];
 
     return createPortal(
@@ -410,6 +353,59 @@ ${prompt.content}
                                 </div>
                             )}
                         </div>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className="btn btn-ghost icon-only"
+                                onClick={() => setShowCollectionMenu(!showCollectionMenu)}
+                                title="Add to Collection"
+                            >
+                                <FolderPlus size={20} />
+                            </button>
+                            {showCollectionMenu && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    marginTop: '0.25rem',
+                                    background: 'var(--bg-card)',
+                                    border: '1px solid var(--border-subtle)',
+                                    borderRadius: '8px',
+                                    padding: '0.25rem',
+                                    zIndex: 10,
+                                    minWidth: '180px',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                }}>
+                                    {collections.length === 0 ? (
+                                        <div style={{ padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+                                            <Layers size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                                            <p>No collections yet</p>
+                                        </div>
+                                    ) : (
+                                        collections.map(collection => (
+                                            <button
+                                                key={collection.id}
+                                                className="btn btn-ghost sm"
+                                                onClick={() => handleAddToCollection(collection.id)}
+                                                disabled={isInCollection(collection.id)}
+                                                style={{
+                                                    width: '100%',
+                                                    justifyContent: 'flex-start',
+                                                    gap: '0.5rem',
+                                                    opacity: isInCollection(collection.id) ? 0.5 : 1
+                                                }}
+                                            >
+                                                <Layers size={14} />
+                                                {collection.name}
+                                                {isInCollection(collection.id) && (
+                                                    <Check size={14} style={{ marginLeft: 'auto', color: '#10b981' }} />
+                                                )}
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         {onFork && (
                             <button
                                 className="btn btn-ghost icon-only"
@@ -466,44 +462,71 @@ ${prompt.content}
 
                         <div className="prompt-display">
                             <p className="prompt-text">{filledContent}</p>
-                            <div className="prompt-actions" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div className="ai-tools" style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <span className="text-xs text-secondary" style={{ alignSelf: 'center', marginRight: '0.5rem' }}>Run with:</span>
-                                    {AI_TOOLS.map(tool => (
+                            <div className="prompt-actions" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={handleRunInChatGPT}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#10a37f' }}
+                                    >
+                                        <ChatGPTIcon size={18} />
+                                        <span>Run in ChatGPT</span>
+                                        <ExternalLink size={14} />
+                                    </button>
+
+                                    <div style={{ position: 'relative' }}>
                                         <button
-                                            key={tool.name}
-                                            className={`btn btn-ghost icon-only sm tool-btn ${tool.disabled ? 'disabled' : ''}`}
-                                            onClick={() => handleOpenAI(tool)}
-                                            title={tool.disabled ? `${tool.name} (Coming Soon)` : `Copy & Open in ${tool.name}`}
-                                            aria-label={`Run with ${tool.name}`}
-                                            style={{
-                                                color: tool.disabled ? 'var(--text-muted)' : tool.color,
-                                                borderColor: 'var(--border-subtle)',
-                                                border: '1px solid',
-                                                opacity: tool.disabled ? 0.5 : 1,
-                                                cursor: tool.disabled ? 'not-allowed' : 'pointer'
-                                            }}
+                                            className="btn btn-ghost sm"
+                                            onClick={() => setShowMoreTools(!showMoreTools)}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                                         >
-                                            <tool.icon size={16} aria-hidden="true" />
+                                            More
+                                            <ChevronDown size={14} />
                                         </button>
-                                    ))}
+                                        {showMoreTools && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                left: 0,
+                                                marginTop: '0.25rem',
+                                                background: 'var(--bg-card)',
+                                                border: '1px solid var(--border-subtle)',
+                                                borderRadius: '8px',
+                                                padding: '0.25rem',
+                                                zIndex: 10,
+                                                minWidth: '140px'
+                                            }}>
+                                                {OTHER_TOOLS.map(tool => (
+                                                    <button
+                                                        key={tool.name}
+                                                        className="btn btn-ghost sm"
+                                                        onClick={() => handleRunInTool(tool)}
+                                                        style={{ width: '100%', justifyContent: 'flex-start', gap: '0.5rem', color: tool.color }}
+                                                    >
+                                                        <tool.icon size={16} />
+                                                        {tool.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <button
-                                    className={`btn btn-primary copy-btn ${isCopied ? 'success' : ''}`}
+                                    className={`btn btn-ghost ${isCopied ? 'text-success' : ''}`}
                                     onClick={handleCopy}
                                     title={hasVariables ? 'Copy Filled' : 'Copy'}
-                                    style={{ minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                                 >
                                     {isCopied ? (
                                         <>
-                                            <Check size={20} />
+                                            <Check size={18} />
                                             <span>Copied!</span>
                                         </>
                                     ) : (
                                         <>
-                                            <Copy size={20} />
-                                            <span className="hide-mobile">Copy</span>
+                                            <Copy size={18} />
+                                            <span>Copy</span>
                                         </>
                                     )}
                                 </button>
@@ -535,75 +558,6 @@ ${prompt.content}
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                                     <Zap size={14} /> {prompt.stats.aiLaunches || 0} AI runs
                                 </span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="detail-section">
-                        <h3 className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <ImageIcon size={20} />
-                                Attachment
-                            </span>
-                            {!displayAttachment && (
-                                <label className="btn btn-ghost sm" style={{ cursor: 'pointer', fontSize: '0.8rem' }}>
-                                    + Add File
-                                    <input type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
-                                </label>
-                            )}
-                        </h3>
-
-                        {displayAttachment ? (
-                            <div className="example-image-container" style={{ position: 'relative', background: 'var(--bg-secondary)', padding: displayAttachment.type.startsWith('image/') ? '0' : '1rem', borderRadius: '8px' }}>
-                                {displayAttachment.type.startsWith('image/') ? (
-                                    <img src={displayAttachment.data} alt="Attachment" className="example-image" />
-                                ) : (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{ width: '60px', height: '60px', background: 'var(--border-subtle)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span style={{ fontWeight: 'bold' }}>FILE</span>
-                                        </div>
-                                        <div>
-                                            <div style={{ fontWeight: '500' }}>{displayAttachment.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                {displayAttachment.size ? `${(displayAttachment.size / 1024).toFixed(1)} KB` : 'Unknown size'}
-                                            </div>
-                                            <a href={displayAttachment.data} download={displayAttachment.name} style={{ fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'underline', marginTop: '0.25rem', display: 'inline-block' }}>
-                                                Download
-                                            </a>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <button
-                                    className="btn btn-ghost icon-only"
-                                    onClick={handleRemoveAttachment}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '0.5rem',
-                                        right: '0.5rem',
-                                        background: 'rgba(0,0,0,0.5)',
-                                        color: 'white',
-                                        borderRadius: '50%'
-                                    }}
-                                    title="Remove Attachment"
-                                >
-                                    <X size={16} />
-                                </button>
-                            </div>
-                        ) : (
-                            <div style={{
-                                border: '2px dashed var(--border-subtle)',
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '2rem',
-                                textAlign: 'center',
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.9rem'
-                            }}>
-                                <p>No attachment.</p>
-                                <label style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: '500' }}>
-                                    Upload file or image
-                                    <input type="file" onChange={handleFileSelect} style={{ display: 'none' }} />
-                                </label>
                             </div>
                         )}
                     </div>
@@ -678,7 +632,6 @@ ${prompt.content}
                             )}
                         </div>
                     )}
-
                 </div>
             </div>
         </div>,

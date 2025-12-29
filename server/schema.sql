@@ -26,3 +26,19 @@ CREATE TABLE IF NOT EXISTS favorites (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, prompt_id)
 );
+
+CREATE TABLE IF NOT EXISTS collections (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL, -- Clerk User ID
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS collection_prompts (
+    collection_id INTEGER REFERENCES collections(id) ON DELETE CASCADE,
+    prompt_id INTEGER REFERENCES prompts(id) ON DELETE CASCADE,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection_id, prompt_id)
+);

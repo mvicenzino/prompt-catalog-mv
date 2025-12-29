@@ -5,13 +5,19 @@ dotenv.config();
 
 // This middleware populates req.auth
 export const authenticateToken = (req, res, next) => {
+    // Log incoming auth header for debugging
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        console.log('Auth header received:', authHeader.substring(0, 50) + '...');
+    }
+
     // Custom wrapper to debug
     return ClerkExpressWithAuth()(req, res, (err) => {
         if (err) {
             console.error('Clerk Auth Error:', err);
             return next(err);
         }
-        // console.log('Auth Status:', req.auth ? req.auth.userId : 'No Auth');
+        console.log('Auth Status:', req.auth ? req.auth.userId : 'No Auth');
         next();
     });
 };

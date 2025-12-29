@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Update UI based on auth state
   function updateUI(settings) {
-    apiUrlInput.value = settings.apiUrl || 'http://localhost:3001';
+    apiUrlInput.value = settings.apiUrl || 'http://localhost:5001';
 
     if (settings.authToken) {
       statusBadge.classList.remove('disconnected');
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Connect with token
   connectBtn.addEventListener('click', async () => {
     const token = tokenInput.value.trim();
-    const apiUrl = apiUrlInput.value.trim() || 'http://localhost:3001';
+    const apiUrl = apiUrlInput.value.trim() || 'http://localhost:5001';
 
     if (!token) {
       showError('Please enter your API token');

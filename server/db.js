@@ -23,3 +23,4 @@ const poolConfig = connectionString
 const pool = new Pool(poolConfig);
 
 export const query = (text, params) => pool.query(text, params);
+export default pool;

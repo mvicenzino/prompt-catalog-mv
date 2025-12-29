@@ -11,6 +11,8 @@
     "https://chatgpt.com/*",
     "https://chat.openai.com/*",
     "https://claude.ai/*",
+    "https://x.com/*",
+    "https://twitter.com/*",
     "http://localhost:*/*",
     "https://*.vercel.app/*"
   ],
@@ -41,6 +43,14 @@
         "https://claude.ai/*"
       ],
       "js": ["content-claude.js"],
+      "css": ["content.css"]
+    },
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": ["content-x.js"],
       "css": ["content.css"]
     }
   ],

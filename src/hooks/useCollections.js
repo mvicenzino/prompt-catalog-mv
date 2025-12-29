@@ -1,68 +1,145 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 
-const INITIAL_COLLECTIONS = [
-    {
-        id: '1',
-        name: 'Product Launch',
-        description: 'Essential prompts for launching a new product.',
-        promptIds: ['16', '8', '29'] // Viral Thread, Minimalist App, Co-Founder
-    },
-    {
-        id: '2',
-        name: 'Creative Writing',
-        description: 'Inspiration for storytelling and character design.',
-        promptIds: ['17', '19', '6'] // Unexpected Perspective, Sensory, Double Exposure
-    }
-];
+const API_URL = '/api/collections';
 
 export const useCollections = () => {
-    const [collections, setCollections] = useState(() => {
-        const saved = localStorage.getItem('collections');
-        return saved ? JSON.parse(saved) : INITIAL_COLLECTIONS;
-    });
+    const [collections, setCollections] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const { getToken } = useAuth();
+
+    const fetchCollections = useCallback(async () => {
+        try {
+            const token = await getToken();
+            if (!token) {
+                setCollections([]);
+                setIsLoaded(true);
+                return;
+            }
+
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Ensure promptIds is always an array
+                const normalized = data.map(c => ({
+                    ...c,
+                    promptIds: Array.isArray(c.promptIds) ? c.promptIds : []
+                }));
+                setCollections(normalized);
+            } else {
+                console.error('Failed to fetch collections');
+            }
+        } catch (error) {
+            console.error('Error fetching collections:', error);
+        } finally {
+            setIsLoaded(true);
+        }
+    }, [getToken]);
 
     useEffect(() => {
-        localStorage.setItem('collections', JSON.stringify(collections));
-    }, [collections]);
+        fetchCollections();
+    }, [fetchCollections]);
 
-    const createCollection = (name, description) => {
-        const newCollection = {
-            id: crypto.randomUUID(),
-            name,
-            description,
-            promptIds: []
-        };
-        setCollections([...collections, newCollection]);
-        return newCollection.id;
-    };
+    const createCollection = async (name, description) => {
+        try {
+            const token = await getToken();
+            if (!token) return null;
 
-    const deleteCollection = (id) => {
-        setCollections(collections.filter(c => c.id !== id));
-    };
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description })
+            });
 
-    const addPromptToCollection = (collectionId, promptId) => {
-        setCollections(collections.map(c => {
-            if (c.id === collectionId && !c.promptIds.includes(promptId)) {
-                return { ...c, promptIds: [...c.promptIds, promptId] };
+            if (response.ok) {
+                const newCollection = await response.json();
+                newCollection.promptIds = newCollection.promptIds || [];
+                setCollections(prev => [newCollection, ...prev]);
+                return newCollection.id;
             }
-            return c;
-        }));
+        } catch (error) {
+            console.error('Error creating collection:', error);
+        }
+        return null;
     };
 
-    const removePromptFromCollection = (collectionId, promptId) => {
-        setCollections(collections.map(c => {
-            if (c.id === collectionId) {
-                return { ...c, promptIds: c.promptIds.filter(id => id !== promptId) };
+    const deleteCollection = async (id) => {
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setCollections(prev => prev.filter(c => c.id !== id));
             }
-            return c;
-        }));
+        } catch (error) {
+            console.error('Error deleting collection:', error);
+        }
+    };
+
+    const addPromptToCollection = async (collectionId, promptId) => {
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch(`${API_URL}/${collectionId}/prompts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ promptId })
+            });
+
+            if (response.ok) {
+                const { promptIds } = await response.json();
+                setCollections(prev => prev.map(c =>
+                    c.id === collectionId ? { ...c, promptIds } : c
+                ));
+            }
+        } catch (error) {
+            console.error('Error adding prompt to collection:', error);
+        }
+    };
+
+    const removePromptFromCollection = async (collectionId, promptId) => {
+        try {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch(`${API_URL}/${collectionId}/prompts/${promptId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const { promptIds } = await response.json();
+                setCollections(prev => prev.map(c =>
+                    c.id === collectionId ? { ...c, promptIds } : c
+                ));
+            }
+        } catch (error) {
+            console.error('Error removing prompt from collection:', error);
+        }
     };
 
     return {
         collections,
+        isLoaded,
         createCollection,
         deleteCollection,
         addPromptToCollection,
-        removePromptFromCollection
+        removePromptFromCollection,
+        refreshCollections: fetchCollections
     };
 };

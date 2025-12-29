@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Trash2, X, Layers } from 'lucide-react';
+import { toast } from 'sonner';
 import PromptCard from '../components/PromptCard';
 import PromptDetailModal from '../components/PromptDetailModal';
 import { useCollections } from '../hooks/useCollections';
@@ -9,17 +10,29 @@ import { usePrompts } from '../hooks/usePrompts';
 const CollectionDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { collections, deleteCollection, removePromptFromCollection } = useCollections();
+    const { collections, isLoaded, deleteCollection, removePromptFromCollection } = useCollections();
     const { prompts, toggleFavorite } = usePrompts();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
 
-    const collection = collections.find(c => c.id === id);
+    // ID from URL is string, database ID is number
+    const collection = collections.find(c => String(c.id) === id);
+
+    if (!isLoaded) {
+        return (
+            <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                <div className="spin" style={{ display: 'inline-block' }}>
+                    <Layers size={48} style={{ opacity: 0.5 }} />
+                </div>
+                <p>Loading collection...</p>
+            </div>
+        );
+    }
 
     if (!collection) {
         return (
             <div style={{ textAlign: 'center', padding: '4rem' }}>
                 <h2>Collection not found</h2>
-                <Link to="/collections" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-flex' }}>
+                <Link to="/app/collections" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-flex' }}>
                     Back to Collections
                 </Link>
             </div>
@@ -28,17 +41,23 @@ const CollectionDetail = () => {
 
     const collectionPrompts = prompts.filter(p => collection.promptIds.includes(p.id));
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (confirm('Are you sure you want to delete this collection?')) {
-            deleteCollection(id);
-            navigate('/collections');
+            await deleteCollection(collection.id);
+            toast.success('Collection deleted');
+            navigate('/app/collections');
         }
+    };
+
+    const handleRemovePrompt = async (promptId) => {
+        await removePromptFromCollection(collection.id, promptId);
+        toast.success('Prompt removed from collection');
     };
 
     return (
         <div>
             <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
-                <Link to="/collections" className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', textDecoration: 'none', fontSize: '0.9rem' }}>
+                <Link to="/app/collections" className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', textDecoration: 'none', fontSize: '0.9rem' }}>
                     <ArrowLeft size={16} />
                     Back to Collections
                 </Link>
@@ -84,7 +103,7 @@ const CollectionDetail = () => {
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    removePromptFromCollection(collection.id, prompt.id);
+                                    handleRemovePrompt(prompt.id);
                                 }}
                                 title="Remove from collection"
                             >
@@ -103,7 +122,7 @@ const CollectionDetail = () => {
                 }}>
                     <p>This collection is empty.</p>
                     <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Add prompts from the main library to build your stack.</p>
-                    <Link to="/" className="btn btn-primary" style={{ marginTop: '1.5rem', display: 'inline-flex' }}>
+                    <Link to="/app" className="btn btn-primary" style={{ marginTop: '1.5rem', display: 'inline-flex' }}>
                         Browse Prompts
                     </Link>
                 </div>

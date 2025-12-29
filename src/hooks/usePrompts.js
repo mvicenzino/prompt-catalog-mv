@@ -139,5 +139,30 @@ export const usePrompts = () => {
         return null;
     };
 
-    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, isLoaded };
+    const votePrompt = async (id, voteType) => {
+        try {
+            const token = await getToken();
+            if (!token) return null;
+            const response = await fetch(`${API_URL}/${id}/vote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ voteType })
+            });
+            if (response.ok) {
+                const { upvotes, downvotes, userVote } = await response.json();
+                setPrompts(prev => prev.map(p =>
+                    p.id === id ? { ...p, upvotes, downvotes, userVote } : p
+                ));
+                return { upvotes, downvotes, userVote };
+            }
+        } catch (error) {
+            console.error('Error voting on prompt:', error);
+        }
+        return null;
+    };
+
+    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, votePrompt, isLoaded };
 };

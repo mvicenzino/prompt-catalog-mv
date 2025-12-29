@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 import { usePrompts } from '../hooks/usePrompts';
+import { useAuth } from '@clerk/clerk-react';
+import { toast } from 'sonner';
 
 const AddPromptModal = ({ isOpen, onClose }) => {
     const { addPrompt } = usePrompts();
+    const { getToken } = useAuth();
     const [attachment, setAttachment] = useState(null);
+    const [isCategorizin, setIsCategorizing] = useState(false);
+    const [hasAutoCategorzed, setHasAutoCategorized] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -12,6 +17,64 @@ const AddPromptModal = ({ isOpen, onClose }) => {
         source: 'Other',
         tags: ''
     });
+
+    // Auto-categorize when content is long enough and hasn't been categorized yet
+    const autoCategorize = useCallback(async () => {
+        if (!formData.content || formData.content.length < 20) return;
+        if (isCategorizin || hasAutoCategorzed) return;
+
+        setIsCategorizing(true);
+        try {
+            const token = await getToken();
+            const response = await fetch('/api/ai/categorize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    content: formData.content,
+                    title: formData.title
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setFormData(prev => ({
+                    ...prev,
+                    category: result.category,
+                    tags: result.tags.join(', ')
+                }));
+                setHasAutoCategorized(true);
+                toast.success('Auto-categorized!', {
+                    description: `Category: ${result.category}`,
+                    duration: 2000
+                });
+            }
+        } catch (err) {
+            console.error('Auto-categorize error:', err);
+        } finally {
+            setIsCategorizing(false);
+        }
+    }, [formData.content, formData.title, getToken, isCategorizin, hasAutoCategorzed]);
+
+    // Debounce auto-categorization
+    useEffect(() => {
+        if (!isOpen || hasAutoCategorzed || formData.content.length < 50) return;
+
+        const timer = setTimeout(() => {
+            autoCategorize();
+        }, 1500); // Wait 1.5s after typing stops
+
+        return () => clearTimeout(timer);
+    }, [formData.content, isOpen, hasAutoCategorzed, autoCategorize]);
+
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setHasAutoCategorized(false);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -154,7 +217,29 @@ const AddPromptModal = ({ isOpen, onClose }) => {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Category</label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                Category
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setHasAutoCategorized(false);
+                                        autoCategorize();
+                                    }}
+                                    disabled={isCategorizin || formData.content.length < 20}
+                                    className="btn btn-ghost icon-only sm"
+                                    title="Auto-categorize with AI"
+                                    style={{
+                                        padding: '0.2rem',
+                                        color: isCategorizin ? 'var(--accent-primary)' : 'var(--text-muted)'
+                                    }}
+                                >
+                                    {isCategorizin ? (
+                                        <Loader2 size={14} className="spin" />
+                                    ) : (
+                                        <Sparkles size={14} />
+                                    )}
+                                </button>
+                            </label>
                             <select
                                 className="input"
                                 value={formData.category}

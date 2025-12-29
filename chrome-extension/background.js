@@ -1,7 +1,7 @@
 // PromptPal Background Service Worker
 
 // Default API URL - can be changed via popup settings
-const DEFAULT_API_URL = 'http://localhost:3001';
+const DEFAULT_API_URL = 'http://localhost:5001';
 
 // Get stored settings
 async function getSettings() {
@@ -73,14 +73,17 @@ function generateTitle(content) {
 // Validate auth token by making a test request
 async function validateToken(apiUrl, token) {
   try {
+    console.log('Validating token with URL:', apiUrl);
     const response = await fetch(`${apiUrl}/api/prompts?limit=1`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
+    console.log('Validation response status:', response.status);
     return response.ok;
-  } catch {
+  } catch (err) {
+    console.error('Token validation error:', err);
     return false;
   }
 }

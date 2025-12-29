@@ -1,9 +1,23 @@
 import { useState } from 'react';
-import { Copy, Star, Check, GitFork } from 'lucide-react';
+import { Copy, Star, Check, GitFork, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { getSourceIcon } from '../utils/sourceIcon';
 
-const PromptCard = ({ prompt, onToggleFavorite }) => {
+const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
     const [isCopied, setIsCopied] = useState(false);
+    const [isVoting, setIsVoting] = useState(false);
+
+    const handleVote = async (e, voteType) => {
+        e.stopPropagation();
+        if (isVoting || !onVote) return;
+
+        setIsVoting(true);
+        // If clicking the same vote type, remove vote
+        const newVoteType = prompt.userVote === voteType ? 'none' : voteType;
+        await onVote(prompt.id, newVoteType);
+        setIsVoting(false);
+    };
+
+    const voteScore = (prompt.upvotes || 0) - (prompt.downvotes || 0);
 
     const handleCopy = async (e) => {
         e.stopPropagation();
@@ -54,12 +68,49 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
             </h3>
             <p className="card-content">{prompt.content}</p>
 
-            <div className="card-footer">
+            <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="tags">
-                    {prompt.tags?.map(tag => (
+                    {prompt.tags?.slice(0, 2).map(tag => (
                         <span key={tag} className="tag">#{tag}</span>
                     ))}
                 </div>
+                {onVote && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <button
+                            className={`btn btn-ghost icon-only sm ${prompt.userVote === 'up' ? 'voted-up' : ''}`}
+                            onClick={(e) => handleVote(e, 'up')}
+                            disabled={isVoting}
+                            title="This prompt worked well"
+                            style={{
+                                color: prompt.userVote === 'up' ? '#10b981' : 'var(--text-muted)',
+                                padding: '0.25rem'
+                            }}
+                        >
+                            <ThumbsUp size={14} fill={prompt.userVote === 'up' ? 'currentColor' : 'none'} />
+                        </button>
+                        <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: voteScore > 0 ? '#10b981' : voteScore < 0 ? '#ef4444' : 'var(--text-muted)',
+                            minWidth: '1.5rem',
+                            textAlign: 'center'
+                        }}>
+                            {voteScore > 0 ? `+${voteScore}` : voteScore}
+                        </span>
+                        <button
+                            className={`btn btn-ghost icon-only sm ${prompt.userVote === 'down' ? 'voted-down' : ''}`}
+                            onClick={(e) => handleVote(e, 'down')}
+                            disabled={isVoting}
+                            title="This prompt needs work"
+                            style={{
+                                color: prompt.userVote === 'down' ? '#ef4444' : 'var(--text-muted)',
+                                padding: '0.25rem'
+                            }}
+                        >
+                            <ThumbsDown size={14} fill={prompt.userVote === 'down' ? 'currentColor' : 'none'} />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

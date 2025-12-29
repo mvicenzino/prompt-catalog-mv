@@ -46,18 +46,20 @@ router.get('/', authenticateToken, async (req, res) => {
             // If they are not signed in, they see public templates.
 
             text = `
-                SELECT p.*, 
-                       CASE WHEN f.user_id IS NOT NULL THEN true ELSE false END as "isFavorite"
+                SELECT p.*,
+                       CASE WHEN f.user_id IS NOT NULL THEN true ELSE false END as "isFavorite",
+                       v.vote_type as "userVote"
                 FROM prompts p
                 LEFT JOIN favorites f ON p.id = f.prompt_id AND f.user_id = $1
-                WHERE p.user_id = $1
+                LEFT JOIN votes v ON p.id = v.prompt_id AND v.user_id = $1
+                WHERE p.user_id = $1 OR p.user_id IS NULL
                 ORDER BY p.created_at DESC
             `;
             params = [userId];
         } else {
             // Unauthenticated: Show public templates
             text = `
-                SELECT p.*, false as "isFavorite"
+                SELECT p.*, false as "isFavorite", NULL as "userVote"
                 FROM prompts p
                 WHERE p.user_id IS NULL AND p.is_public = true
                 ORDER BY p.created_at DESC
@@ -356,6 +358,114 @@ router.get('/shared/:shareId', async (req, res) => {
         }
 
         res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Vote on a prompt (upvote or downvote)
+router.post('/:id/vote', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+        const { voteType } = req.body; // 'up', 'down', or 'none' (to remove vote)
+
+        if (!['up', 'down', 'none'].includes(voteType)) {
+            return res.status(400).json({ message: 'Invalid vote type' });
+        }
+
+        // Check if prompt exists
+        const promptCheck = await query('SELECT id, upvotes, downvotes FROM prompts WHERE id = $1', [promptId]);
+        if (promptCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        // Get existing vote
+        const existingVote = await query(
+            'SELECT vote_type FROM votes WHERE prompt_id = $1 AND user_id = $2',
+            [promptId, userId]
+        );
+
+        const hadVote = existingVote.rows.length > 0;
+        const previousVote = hadVote ? existingVote.rows[0].vote_type : null;
+
+        // Remove vote
+        if (voteType === 'none') {
+            if (hadVote) {
+                await query('DELETE FROM votes WHERE prompt_id = $1 AND user_id = $2', [promptId, userId]);
+                // Decrement the appropriate counter
+                if (previousVote === 'up') {
+                    await query('UPDATE prompts SET upvotes = GREATEST(0, upvotes - 1) WHERE id = $1', [promptId]);
+                } else if (previousVote === 'down') {
+                    await query('UPDATE prompts SET downvotes = GREATEST(0, downvotes - 1) WHERE id = $1', [promptId]);
+                }
+            }
+        } else {
+            // Add or change vote
+            if (hadVote) {
+                // Update existing vote
+                if (previousVote !== voteType) {
+                    await query(
+                        'UPDATE votes SET vote_type = $1, created_at = NOW() WHERE prompt_id = $2 AND user_id = $3',
+                        [voteType, promptId, userId]
+                    );
+                    // Update counters
+                    if (previousVote === 'up') {
+                        await query('UPDATE prompts SET upvotes = GREATEST(0, upvotes - 1) WHERE id = $1', [promptId]);
+                    } else {
+                        await query('UPDATE prompts SET downvotes = GREATEST(0, downvotes - 1) WHERE id = $1', [promptId]);
+                    }
+                    if (voteType === 'up') {
+                        await query('UPDATE prompts SET upvotes = upvotes + 1 WHERE id = $1', [promptId]);
+                    } else {
+                        await query('UPDATE prompts SET downvotes = downvotes + 1 WHERE id = $1', [promptId]);
+                    }
+                }
+            } else {
+                // Insert new vote
+                await query(
+                    'INSERT INTO votes (prompt_id, user_id, vote_type) VALUES ($1, $2, $3)',
+                    [promptId, userId, voteType]
+                );
+                // Increment counter
+                if (voteType === 'up') {
+                    await query('UPDATE prompts SET upvotes = upvotes + 1 WHERE id = $1', [promptId]);
+                } else {
+                    await query('UPDATE prompts SET downvotes = downvotes + 1 WHERE id = $1', [promptId]);
+                }
+            }
+        }
+
+        // Get updated counts and user's vote
+        const updated = await query('SELECT upvotes, downvotes FROM prompts WHERE id = $1', [promptId]);
+        const userVote = await query('SELECT vote_type FROM votes WHERE prompt_id = $1 AND user_id = $2', [promptId, userId]);
+
+        res.json({
+            upvotes: updated.rows[0].upvotes,
+            downvotes: updated.rows[0].downvotes,
+            userVote: userVote.rows.length > 0 ? userVote.rows[0].vote_type : null
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get user's vote for a prompt
+router.get('/:id/vote', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+
+        const vote = await query(
+            'SELECT vote_type FROM votes WHERE prompt_id = $1 AND user_id = $2',
+            [promptId, userId]
+        );
+
+        res.json({
+            userVote: vote.rows.length > 0 ? vote.rows[0].vote_type : null
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
