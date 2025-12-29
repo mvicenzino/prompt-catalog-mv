@@ -1,14 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, Check } from 'lucide-react';
+import { X, Copy, Trash2, ImageIcon, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { ChatGPTIcon, GeminiIcon, ClaudeIcon, PerplexityIcon, MidjourneyIcon } from './AIIcons';
 import { getSourceIcon } from '../utils/sourceIcon';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
+    const { getToken } = useAuth();
     const [variables, setVariables] = useState({});
     const [filledContent, setFilledContent] = useState('');
     const [isCopied, setIsCopied] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+
+    // Track stat event
+    const trackStat = useCallback(async (event) => {
+        if (!prompt?.id) return;
+        try {
+            const token = await getToken();
+            await fetch(`/api/prompts/${prompt.id}/stats`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ event })
+            });
+        } catch (err) {
+            // Silent fail - stats are non-critical
+        }
+    }, [prompt?.id, getToken]);
 
     // Reset variables and set initial filled content when prompt changes
     useEffect(() => {
@@ -21,8 +44,12 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
             });
             setVariables(vars);
             setFilledContent(prompt.content);
+            setShowHistory(false);
+            setShowExportMenu(false);
+            // Track view
+            trackStat('view');
         }
-    }, [prompt]);
+    }, [prompt, trackStat]);
 
     // Effect to prevent body scrolling when modal is open
     useEffect(() => {
@@ -55,6 +82,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         try {
             await navigator.clipboard.writeText(filledContent);
             setIsCopied(true);
+            trackStat('copy');
             toast.success('Copied to clipboard!', {
                 description: 'Prompt is ready to paste',
                 duration: 2000,
@@ -174,6 +202,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                 break;
         }
 
+        trackStat('aiLaunch');
         toast.success(`Opening ${tool.name}...`, {
             description: 'Prompt copied to clipboard',
             duration: 2000,
@@ -182,8 +211,121 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         window.open(finalUrl, '_blank');
     };
 
+    const handleRestoreVersion = (version) => {
+        toast(`Restore this version?`, {
+            description: `From ${new Date(version.savedAt).toLocaleString()}`,
+            action: {
+                label: 'Restore',
+                onClick: () => {
+                    const restoredPrompt = {
+                        ...prompt,
+                        title: version.title,
+                        content: version.content,
+                        category: version.category,
+                        source: version.source,
+                        tags: version.tags
+                    };
+                    onUpdate(restoredPrompt);
+                    toast.success('Version restored');
+                    setShowHistory(false);
+                }
+            },
+            cancel: { label: 'Cancel' }
+        });
+    };
+
+    const formatVersionDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    };
+
+    const handleExport = (format) => {
+        const exportData = {
+            title: prompt.title,
+            content: prompt.content,
+            category: prompt.category,
+            source: prompt.source,
+            tags: prompt.tags || [],
+            createdAt: prompt.created_at
+        };
+
+        let content, filename, mimeType;
+
+        if (format === 'json') {
+            content = JSON.stringify(exportData, null, 2);
+            filename = `${prompt.title.toLowerCase().replace(/\s+/g, '-')}.json`;
+            mimeType = 'application/json';
+        } else {
+            // Markdown format
+            content = `# ${prompt.title}
+
+**Category:** ${prompt.category || 'N/A'}
+**Source:** ${prompt.source || 'N/A'}
+**Tags:** ${(prompt.tags || []).map(t => `#${t}`).join(' ') || 'None'}
+
+---
+
+${prompt.content}
+
+---
+*Exported from PromptPal*
+`;
+            filename = `${prompt.title.toLowerCase().replace(/\s+/g, '-')}.md`;
+            mimeType = 'text/markdown';
+        }
+
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast.success(`Exported as ${format.toUpperCase()}`);
+    };
+
+    const handleShare = async () => {
+        setIsSharing(true);
+        try {
+            const token = await getToken();
+            const response = await fetch(`/api/prompts/${prompt.id}/share`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error('Failed to generate share link');
+
+            const { shareId } = await response.json();
+            const shareUrl = `${window.location.origin}/p/${shareId}`;
+
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Share link copied!', {
+                description: shareUrl,
+                duration: 4000
+            });
+        } catch (err) {
+            toast.error('Failed to generate share link');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
     const hasVariables = Object.keys(variables).length > 0;
     const displayAttachment = prompt.attachment || (prompt.userImage ? { type: 'image/jpeg', data: prompt.userImage, name: 'Uploaded Image' } : null);
+    const versions = prompt.versions || [];
 
     const AI_TOOLS = [
         { name: 'ChatGPT', url: 'https://chatgpt.com', icon: ChatGPTIcon, color: '#10a37f', disabled: false },
@@ -208,6 +350,53 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                         <h2 className="detail-title">{prompt.title}</h2>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className="btn btn-ghost icon-only"
+                                onClick={() => setShowExportMenu(!showExportMenu)}
+                                title="Export Prompt"
+                            >
+                                <Download size={20} />
+                            </button>
+                            {showExportMenu && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    marginTop: '0.25rem',
+                                    background: 'var(--bg-card)',
+                                    border: '1px solid var(--border-subtle)',
+                                    borderRadius: '8px',
+                                    padding: '0.25rem',
+                                    zIndex: 10,
+                                    minWidth: '120px'
+                                }}>
+                                    <button
+                                        className="btn btn-ghost sm"
+                                        onClick={() => { handleExport('json'); setShowExportMenu(false); }}
+                                        style={{ width: '100%', justifyContent: 'flex-start' }}
+                                    >
+                                        Export JSON
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost sm"
+                                        onClick={() => { handleExport('md'); setShowExportMenu(false); }}
+                                        style={{ width: '100%', justifyContent: 'flex-start' }}
+                                    >
+                                        Export Markdown
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            className="btn btn-ghost icon-only"
+                            onClick={handleShare}
+                            disabled={isSharing}
+                            title="Share Prompt"
+                            style={{ color: 'var(--accent-primary)' }}
+                        >
+                            <Share2 size={20} />
+                        </button>
                         <button className="btn btn-ghost icon-only" onClick={onDelete} title="Delete Prompt" style={{ color: '#ef4444' }}>
                             <Trash2 size={20} />
                         </button>
@@ -293,6 +482,28 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                                 <span key={tag} className="tag large">#{tag}</span>
                             ))}
                         </div>
+
+                        {prompt.stats && (
+                            <div style={{
+                                display: 'flex',
+                                gap: '1.5rem',
+                                marginTop: '1.5rem',
+                                paddingTop: '1rem',
+                                borderTop: '1px solid var(--border-subtle)',
+                                color: 'var(--text-muted)',
+                                fontSize: '0.8rem'
+                            }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <Eye size={14} /> {prompt.stats.views || 0} views
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <Clipboard size={14} /> {prompt.stats.copies || 0} copies
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <Zap size={14} /> {prompt.stats.aiLaunches || 0} AI runs
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="detail-section">
@@ -364,6 +575,76 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                         )}
                     </div>
 
+                    {versions.length > 0 && (
+                        <div className="detail-section">
+                            <button
+                                className="section-title"
+                                onClick={() => setShowHistory(!showHistory)}
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    width: '100%',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: 0,
+                                    color: 'inherit',
+                                    font: 'inherit'
+                                }}
+                            >
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <History size={20} />
+                                    Version History ({versions.length})
+                                </span>
+                                {showHistory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+
+                            {showHistory && (
+                                <div style={{ marginTop: '1rem' }}>
+                                    {[...versions].reverse().map((version, idx) => (
+                                        <div
+                                            key={idx}
+                                            style={{
+                                                padding: '0.75rem',
+                                                marginBottom: '0.5rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border-subtle)'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                                <div>
+                                                    <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{version.title}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                        {formatVersionDate(version.savedAt)}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className="btn btn-ghost sm"
+                                                    onClick={() => handleRestoreVersion(version)}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}
+                                                >
+                                                    <RotateCcw size={14} />
+                                                    Restore
+                                                </button>
+                                            </div>
+                                            <div style={{
+                                                fontSize: '0.8rem',
+                                                color: 'var(--text-secondary)',
+                                                whiteSpace: 'pre-wrap',
+                                                maxHeight: '60px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>
+                                                {version.content.substring(0, 150)}{version.content.length > 150 ? '...' : ''}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                 </div>
             </div>

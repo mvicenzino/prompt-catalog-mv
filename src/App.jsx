@@ -7,6 +7,7 @@ import CollectionDetail from './pages/CollectionDetail';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import SharedPrompt from './pages/SharedPrompt';
 import ProtectedLayout from './components/ProtectedLayout';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/p/:shareId" element={<SharedPrompt />} />
 
                 <Route path="/app" element={<ProtectedLayout />}>
                     <Route index element={<Dashboard />} />

@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS prompts (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(255), -- Clerk User ID
+    share_id VARCHAR(12) UNIQUE, -- Short unique ID for sharing
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     category VARCHAR(50),
@@ -11,7 +12,10 @@ CREATE TABLE IF NOT EXISTS prompts (
     tags TEXT[], -- Array of strings
     is_public BOOLEAN DEFAULT FALSE,
     attachment JSONB, -- File attachment
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    versions JSONB DEFAULT '[]', -- Version history array
+    stats JSONB DEFAULT '{"views": 0, "copies": 0, "aiLaunches": 0}', -- Usage stats
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS favorites (

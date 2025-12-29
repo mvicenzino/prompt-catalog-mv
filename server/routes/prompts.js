@@ -1,8 +1,12 @@
 import express from 'express';
+import crypto from 'crypto';
 import { query } from '../db.js';
 import { authenticateToken, requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Generate a short unique ID for sharing
+const generateShareId = () => crypto.randomBytes(6).toString('base64url');
 
 // Get all prompts (public + user's own)
 router.get('/', authenticateToken, async (req, res) => {
@@ -136,34 +140,147 @@ router.delete('/:id', authenticateToken, requireAuth, async (req, res) => {
     }
 });
 
-// Update prompt
+// Update prompt (with version history)
 router.put('/:id', authenticateToken, requireAuth, async (req, res) => {
     try {
         const promptId = req.params.id;
         const userId = req.auth.userId;
         const { title, content, category, source, tags, is_public, attachment } = req.body;
 
-        // Check ownership
+        // Check ownership and get current data
         const check = await query('SELECT * FROM prompts WHERE id = $1', [promptId]);
         if (check.rows.length === 0) return res.status(404).json({ message: 'Prompt not found' });
 
-        if (check.rows[0].user_id !== userId) {
+        const currentPrompt = check.rows[0];
+        if (currentPrompt.user_id !== userId) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
+        // Create version snapshot (exclude versions array and large attachment data)
+        const versionSnapshot = {
+            title: currentPrompt.title,
+            content: currentPrompt.content,
+            category: currentPrompt.category,
+            source: currentPrompt.source,
+            tags: currentPrompt.tags,
+            savedAt: new Date().toISOString()
+        };
+
+        // Get existing versions or initialize empty array
+        const existingVersions = currentPrompt.versions || [];
+        // Keep last 10 versions to prevent unbounded growth
+        const updatedVersions = [...existingVersions, versionSnapshot].slice(-10);
+
         const text = `
-            UPDATE prompts 
-            SET title = $1, content = $2, category = $3, source = $4, tags = $5, is_public = $6, attachment = $7
-            WHERE id = $8
+            UPDATE prompts
+            SET title = $1, content = $2, category = $3, source = $4, tags = $5,
+                is_public = $6, attachment = $7, versions = $8, updated_at = NOW()
+            WHERE id = $9
             RETURNING *
         `;
-        const values = [title, content, category, source, tags, is_public, attachment, promptId];
+        const values = [title, content, category, source, tags, is_public, attachment, JSON.stringify(updatedVersions), promptId];
         const result = await query(text, values);
 
         const favCheck = await query('SELECT * FROM favorites WHERE user_id = $1 AND prompt_id = $2', [userId, promptId]);
         const isFavorite = favCheck.rows.length > 0;
 
         res.json({ ...result.rows[0], isFavorite });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get version history for a prompt
+router.get('/:id/versions', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+
+        const result = await query('SELECT versions FROM prompts WHERE id = $1 AND user_id = $2', [promptId, userId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        res.json(result.rows[0].versions || []);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Generate or get share link for a prompt
+router.post('/:id/share', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+
+        // Check ownership
+        const check = await query('SELECT share_id FROM prompts WHERE id = $1 AND user_id = $2', [promptId, userId]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        let shareId = check.rows[0].share_id;
+
+        // Generate new share_id if not exists
+        if (!shareId) {
+            shareId = generateShareId();
+            await query('UPDATE prompts SET share_id = $1 WHERE id = $2', [shareId, promptId]);
+        }
+
+        res.json({ shareId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Track usage stats (views, copies, AI launches)
+router.post('/:id/stats', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+        const { event } = req.body; // 'view', 'copy', or 'aiLaunch'
+
+        if (!['view', 'copy', 'aiLaunch'].includes(event)) {
+            return res.status(400).json({ message: 'Invalid event type' });
+        }
+
+        // Check ownership
+        const check = await query('SELECT stats FROM prompts WHERE id = $1 AND user_id = $2', [promptId, userId]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        const currentStats = check.rows[0].stats || { views: 0, copies: 0, aiLaunches: 0 };
+        const statKey = event === 'view' ? 'views' : event === 'copy' ? 'copies' : 'aiLaunches';
+        currentStats[statKey] = (currentStats[statKey] || 0) + 1;
+
+        await query('UPDATE prompts SET stats = $1 WHERE id = $2', [JSON.stringify(currentStats), promptId]);
+
+        res.json({ stats: currentStats });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get shared prompt (public, no auth required)
+router.get('/shared/:shareId', async (req, res) => {
+    try {
+        const { shareId } = req.params;
+
+        const result = await query(
+            'SELECT id, title, content, category, source, tags, created_at FROM prompts WHERE share_id = $1',
+            [shareId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Shared prompt not found' });
+        }
+
+        res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
