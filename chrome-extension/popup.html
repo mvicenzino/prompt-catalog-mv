@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptPal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .header {
+      padding: 20px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .status-section {
+      margin-bottom: 20px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.connected {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+
+    .status-badge.disconnected {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .user-email {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .form-group input::placeholder {
+      color: #666;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ccc;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      margin-top: 8px;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .error-message {
+      padding: 10px;
+      background: rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      color: #ef4444;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .success-message {
+      padding: 10px;
+      background: rgba(16, 185, 129, 0.2);
+      border-radius: 8px;
+      color: #10b981;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 16px;
+      cursor: pointer;
+    }
+
+    .settings-toggle span {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .settings-toggle svg {
+      color: #888;
+      transition: transform 0.2s;
+    }
+
+    .settings-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    .settings-section {
+      display: none;
+      padding-top: 16px;
+    }
+
+    .settings-section.open {
+      display: block;
+    }
+
+    .help-text {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    #logged-out-view, #logged-in-view {
+      display: none;
+    }
+
+    #logged-out-view.active, #logged-in-view.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>PromptPal</h1>
+    <p>Capture prompts from AI tools</p>
+  </div>
+
+  <div class="content">
+    <div class="status-section">
+      <span id="status-badge" class="status-badge disconnected">
+        <span class="status-dot"></span>
+        <span id="status-text">Not connected</span>
+      </span>
+      <p id="user-email" class="user-email"></p>
+    </div>
+
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
+
+    <!-- Logged out view -->
+    <div id="logged-out-view">
+      <div class="form-group">
+        <label for="token-input">API Token</label>
+        <input type="password" id="token-input" placeholder="Paste your API token">
+        <p class="help-text">Get your token from PromptPal settings</p>
+      </div>
+      <button id="connect-btn" class="btn btn-primary">Connect</button>
+    </div>
+
+    <!-- Logged in view -->
+    <div id="logged-in-view">
+      <p style="font-size: 13px; color: #ccc; margin-bottom: 16px;">
+        You're connected! Visit ChatGPT or Claude and click the floating button to save prompts.
+      </p>
+      <button id="open-app-btn" class="btn btn-primary">Open PromptPal</button>
+      <button id="logout-btn" class="btn btn-danger">Disconnect</button>
+    </div>
+
+    <!-- Settings section -->
+    <div class="settings-toggle" id="settings-toggle">
+      <span>Advanced Settings</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+    </div>
+    <div class="settings-section" id="settings-section">
+      <div class="form-group">
+        <label for="api-url">API URL</label>
+        <input type="text" id="api-url" placeholder="http://localhost:3001">
+        <p class="help-text">Change only if using a custom server</p>
+      </div>
+      <button id="save-settings-btn" class="btn btn-secondary">Save Settings</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

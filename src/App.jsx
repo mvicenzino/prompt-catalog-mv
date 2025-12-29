@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
+import Settings from './pages/Settings';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
@@ -40,6 +41,7 @@ function App() {
                     <Route path="favorites" element={<Dashboard />} />
                     <Route path="collections" element={<Collections />} />
                     <Route path="collections/:id" element={<CollectionDetail />} />
+                    <Route path="settings" element={<Settings />} />
                     <Route path="*" element={<Navigate to="/app" replace />} />
                 </Route>
 

@@ -9,6 +9,7 @@ import {
     Star,
     PlusCircle,
     Layers,
+    Settings,
     X
 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ const Sidebar = ({ onAddPrompt, isOpen, onClose }) => {
         { icon: Code, label: 'Coding', path: '/app/category/coding' },
         { icon: PenTool, label: 'Writing', path: '/app/category/writing' },
         { icon: Star, label: 'Favorites', path: '/app/favorites' },
+        { icon: Settings, label: 'Settings', path: '/app/settings' },
     ];
 
     return (
