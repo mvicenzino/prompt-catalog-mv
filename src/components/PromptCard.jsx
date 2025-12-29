@@ -1,15 +1,8 @@
-import React, { useState } from 'react';
-import { Copy, Twitter, MessageCircle, User, Star, Check } from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Star, Check } from 'lucide-react';
+import { getSourceIcon } from '../utils/sourceIcon';
 
 const PromptCard = ({ prompt, onToggleFavorite }) => {
-    const getSourceIcon = (source) => {
-        switch (source?.toLowerCase()) {
-            case 'x': return <Twitter size={14} />;
-            case 'reddit': return <MessageCircle size={14} />;
-            default: return <User size={14} />;
-        }
-    };
-
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = async (e) => {

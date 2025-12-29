@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, ArrowRight } from 'lucide-react';
+import { Layers, Plus } from 'lucide-react';
 import { useCollections } from '../hooks/useCollections';
 import { usePrompts } from '../hooks/usePrompts';
 
@@ -76,7 +75,7 @@ const Collections = () => {
                             </p>
 
                             <div className="collection-preview" style={{ display: 'flex', gap: '0.5rem' }}>
-                                {previews.map((p, i) => (
+                                {previews.map((p) => (
                                     <div key={p.id} style={{
                                         flex: 1,
                                         aspectRatio: '1',
@@ -94,8 +93,8 @@ const Collections = () => {
                                         {p.tags?.[0] || 'Prompt'}
                                     </div>
                                 ))}
-                                {[...Array(Math.max(0, 3 - previews.length))].map((_, i) => (
-                                    <div key={i} style={{
+                                {[...Array(Math.max(0, 3 - previews.length))].map((_, idx) => (
+                                    <div key={idx} style={{
                                         flex: 1,
                                         aspectRatio: '1',
                                         background: 'var(--bg-app)',

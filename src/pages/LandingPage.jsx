@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SignInButton, SignUpButton, useAuth } from '@clerk/clerk-react';
 import { Navigate, Link } from 'react-router-dom';
 import { Sparkles, Zap, Layout, Share2, ArrowRight, CheckCircle2 } from 'lucide-react';

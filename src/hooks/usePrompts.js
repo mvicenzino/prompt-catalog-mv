@@ -6,7 +6,7 @@ const API_URL = '/api/prompts';
 export const usePrompts = () => {
     const [prompts, setPrompts] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
-    const { getToken, userId } = useAuth();
+    const { getToken } = useAuth();
 
     const fetchPrompts = useCallback(async () => {
         try {

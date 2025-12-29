@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from '../components/Header';

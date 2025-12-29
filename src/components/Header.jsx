@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Search, Bell } from 'lucide-react';
 import { UserButton, SignInButton, SignedIn, SignedOut } from '@clerk/clerk-react';
 import NotificationDropdown from './NotificationDropdown';

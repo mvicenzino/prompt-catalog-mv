@@ -1,5 +1,3 @@
-import React from 'react';
-
 // ChatGPT Icon (OpenAI logo simplified)
 export const ChatGPTIcon = ({ size = 16, className = '' }) => (
     <svg

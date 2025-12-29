@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, X } from 'lucide-react';
 import PromptCard from '../components/PromptCard';
 import PromptDetailModal from '../components/PromptDetailModal';
 import { useCollections } from '../hooks/useCollections';
@@ -123,8 +123,5 @@ const CollectionDetail = () => {
         </div>
     );
 };
-
-// Import X icon locally since it's used in the inline component
-import { X } from 'lucide-react';
 
 export default CollectionDetail;

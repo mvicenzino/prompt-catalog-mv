@@ -19,7 +19,6 @@ export const authenticateToken = (req, res, next) => {
 // Helper to enforce auth
 export const requireAuth = (req, res, next) => {
     if (!req.auth || !req.auth.userId) {
-        console.log('Unauthorized access attempt');
         return res.status(401).json({ message: 'Unauthorized' });
     }
     next();

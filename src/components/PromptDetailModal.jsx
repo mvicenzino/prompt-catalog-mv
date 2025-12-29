@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, Twitter, User, Check } from 'lucide-react';
+import { X, Copy, Trash2, ImageIcon, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ChatGPTIcon, GeminiIcon, ClaudeIcon, PerplexityIcon, MidjourneyIcon } from './AIIcons';
-import { usePrompts } from '../hooks/usePrompts';
+import { getSourceIcon } from '../utils/sourceIcon';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const [variables, setVariables] = useState({});
@@ -50,14 +50,6 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     }, [variables, prompt]);
 
     if (!isOpen || !prompt) return null;
-
-    const getSourceIcon = (source) => {
-        switch (source?.toLowerCase()) {
-            case 'x': return <Twitter size={16} />;
-            case 'reddit': return <MessageCircle size={16} />;
-            default: return <User size={16} />;
-        }
-    };
 
     const handleCopy = async () => {
         try {
@@ -190,16 +182,6 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
         window.open(finalUrl, '_blank');
     };
 
-    const getExamples = () => {
-        const examples = [];
-        if (prompt.exampleImage) {
-            examples.push(prompt.exampleImage);
-        }
-        // Add fallback examples logic here if needed, simplified for now
-        return examples.map((url, i) => ({ id: i, url }));
-    };
-
-    const examples = getExamples();
     const hasVariables = Object.keys(variables).length > 0;
     const displayAttachment = prompt.attachment || (prompt.userImage ? { type: 'image/jpeg', data: prompt.userImage, name: 'Uploaded Image' } : null);
 
@@ -218,7 +200,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
                     <div className="detail-header-content">
                         <div className="badge-group">
                             <span className="badge source-badge">
-                                {getSourceIcon(prompt.source)}
+                                {getSourceIcon(prompt.source, 16)}
                                 {prompt.source}
                             </span>
                             <span className="badge category-badge">{prompt.category}</span>

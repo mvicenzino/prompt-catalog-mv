@@ -1,4 +1,3 @@
-import React from 'react';
 import { Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePrompts } from '../hooks/usePrompts';

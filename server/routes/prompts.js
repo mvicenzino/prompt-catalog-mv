@@ -12,14 +12,9 @@ router.get('/', authenticateToken, async (req, res) => {
         if (userId) {
             // Check if user has any prompts
             const userPromptsCount = await query('SELECT count(*) FROM prompts WHERE user_id = $1', [userId]);
-            console.log('User ID:', userId);
-            console.log('User Prompts Count:', userPromptsCount.rows[0].count);
 
             if (parseInt(userPromptsCount.rows[0].count) === 0) {
-                console.log('Auto-seeding for user...');
                 // Auto-seed: Copy public templates to this user
-                // We assume public templates have user_id IS NULL and is_public = true
-                // Note: We need to make sure we are selecting from the same table correctly.
                 const seedQuery = `
                     INSERT INTO prompts (user_id, title, content, category, source, tags, is_public, attachment, created_at)
                     SELECT $1, title, content, category, source, tags, false, attachment, NOW()
@@ -27,8 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
                     WHERE user_id IS NULL AND is_public = true
                     RETURNING *
                 `;
-                const seedResult = await query(seedQuery, [userId]);
-                console.log('Seeded prompts count:', seedResult.rowCount);
+                await query(seedQuery, [userId]);
             }
         }
 

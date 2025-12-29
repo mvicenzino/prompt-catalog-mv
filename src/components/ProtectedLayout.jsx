@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuth, RedirectToSignIn } from '@clerk/clerk-react';
 import MainLayout from '../layouts/MainLayout';
 
