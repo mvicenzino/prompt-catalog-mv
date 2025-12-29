@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, ImageIcon, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap } from 'lucide-react';
+import { X, Copy, Trash2, ImageIcon, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { ChatGPTIcon, GeminiIcon, ClaudeIcon, PerplexityIcon, MidjourneyIcon } from './AIIcons';
 import { getSourceIcon } from '../utils/sourceIcon';
 
-const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
+const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork }) => {
     const { getToken } = useAuth();
     const [variables, setVariables] = useState({});
     const [filledContent, setFilledContent] = useState('');
@@ -14,6 +14,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate }) => {
     const [showHistory, setShowHistory] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
+    const [isForking, setIsForking] = useState(false);
 
     // Track stat event
     const trackStat = useCallback(async (event) => {
@@ -297,6 +298,16 @@ ${prompt.content}
         toast.success(`Exported as ${format.toUpperCase()}`);
     };
 
+    const handleFork = async () => {
+        if (!onFork) return;
+        setIsForking(true);
+        try {
+            await onFork();
+        } finally {
+            setIsForking(false);
+        }
+    };
+
     const handleShare = async () => {
         setIsSharing(true);
         try {
@@ -346,8 +357,19 @@ ${prompt.content}
                                 {prompt.source}
                             </span>
                             <span className="badge category-badge">{prompt.category}</span>
+                            {prompt.fork_count > 0 && (
+                                <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>
+                                    <GitFork size={12} style={{ marginRight: '0.25rem' }} />
+                                    {prompt.fork_count} {prompt.fork_count === 1 ? 'fork' : 'forks'}
+                                </span>
+                            )}
                         </div>
                         <h2 className="detail-title">{prompt.title}</h2>
+                        {prompt.forked_from && (
+                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <GitFork size={14} /> Forked from another prompt
+                            </p>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <div style={{ position: 'relative' }}>
@@ -388,6 +410,17 @@ ${prompt.content}
                                 </div>
                             )}
                         </div>
+                        {onFork && (
+                            <button
+                                className="btn btn-ghost icon-only"
+                                onClick={handleFork}
+                                disabled={isForking}
+                                title="Fork Prompt"
+                                style={{ color: '#a855f7' }}
+                            >
+                                <GitFork size={20} />
+                            </button>
+                        )}
                         <button
                             className="btn btn-ghost icon-only"
                             onClick={handleShare}

@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS prompts (
     attachment JSONB, -- File attachment
     versions JSONB DEFAULT '[]', -- Version history array
     stats JSONB DEFAULT '{"views": 0, "copies": 0, "aiLaunches": 0}', -- Usage stats
+    forked_from INTEGER REFERENCES prompts(id) ON DELETE SET NULL, -- Parent prompt if forked
+    fork_count INTEGER DEFAULT 0, -- Number of times this prompt has been forked
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

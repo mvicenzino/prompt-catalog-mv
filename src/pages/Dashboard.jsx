@@ -10,7 +10,7 @@ import { usePrompts } from '../hooks/usePrompts';
 const Dashboard = () => {
     const { category } = useParams();
     const location = useLocation();
-    const { prompts, toggleFavorite, deletePrompt, updatePrompt, isLoaded } = usePrompts();
+    const { prompts, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, isLoaded } = usePrompts();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [showExportMenu, setShowExportMenu] = useState(false);
@@ -193,6 +193,15 @@ ${p.content}
                 onUpdate={(updatedPrompt) => {
                     updatePrompt(updatedPrompt);
                     setSelectedPrompt(updatedPrompt);
+                }}
+                onFork={async () => {
+                    const forked = await forkPrompt(selectedPrompt.id);
+                    if (forked) {
+                        setSelectedPrompt(forked);
+                        toast.success('Prompt forked!', {
+                            description: 'You can now edit your copy'
+                        });
+                    }
                 }}
             />
         </div>

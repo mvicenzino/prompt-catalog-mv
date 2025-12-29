@@ -236,6 +236,81 @@ router.post('/:id/share', authenticateToken, requireAuth, async (req, res) => {
     }
 });
 
+// Fork a prompt (create a copy with reference to original)
+router.post('/:id/fork', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+        const userId = req.auth.userId;
+
+        // Get the original prompt (can fork any prompt you can view - your own or shared)
+        const original = await query(
+            `SELECT * FROM prompts WHERE id = $1 AND (user_id = $2 OR share_id IS NOT NULL)`,
+            [promptId, userId]
+        );
+
+        if (original.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        const p = original.rows[0];
+
+        // Create the forked prompt
+        const forkResult = await query(
+            `INSERT INTO prompts (user_id, title, content, category, source, tags, forked_from)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *`,
+            [userId, `${p.title} (Fork)`, p.content, p.category, p.source, p.tags, promptId]
+        );
+
+        // Increment fork count on original
+        await query(
+            'UPDATE prompts SET fork_count = COALESCE(fork_count, 0) + 1 WHERE id = $1',
+            [promptId]
+        );
+
+        res.json({ ...forkResult.rows[0], isFavorite: false });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get fork parent info (for displaying lineage)
+router.get('/:id/parent', authenticateToken, async (req, res) => {
+    try {
+        const promptId = req.params.id;
+
+        const result = await query(
+            `SELECT p.forked_from, parent.title as parent_title, parent.share_id as parent_share_id
+             FROM prompts p
+             LEFT JOIN prompts parent ON p.forked_from = parent.id
+             WHERE p.id = $1`,
+            [promptId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        const { forked_from, parent_title, parent_share_id } = result.rows[0];
+
+        if (!forked_from) {
+            return res.json({ forkedFrom: null });
+        }
+
+        res.json({
+            forkedFrom: {
+                id: forked_from,
+                title: parent_title,
+                shareId: parent_share_id
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Track usage stats (views, copies, AI launches)
 router.post('/:id/stats', authenticateToken, requireAuth, async (req, res) => {
     try {

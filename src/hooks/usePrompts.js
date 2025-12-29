@@ -114,5 +114,30 @@ export const usePrompts = () => {
         }
     };
 
-    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt, isLoaded };
+    const forkPrompt = async (id) => {
+        try {
+            const token = await getToken();
+            if (!token) return null;
+            const response = await fetch(`${API_URL}/${id}/fork`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                const forkedPrompt = await response.json();
+                setPrompts(prev => [forkedPrompt, ...prev]);
+                // Update fork count on original
+                setPrompts(prev => prev.map(p =>
+                    p.id === id ? { ...p, fork_count: (p.fork_count || 0) + 1 } : p
+                ));
+                return forkedPrompt;
+            }
+        } catch (error) {
+            console.error('Error forking prompt:', error);
+        }
+        return null;
+    };
+
+    return { prompts, addPrompt, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, isLoaded };
 };

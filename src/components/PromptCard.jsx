@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Star, Check } from 'lucide-react';
+import { Copy, Star, Check, GitFork } from 'lucide-react';
 import { getSourceIcon } from '../utils/sourceIcon';
 
 const PromptCard = ({ prompt, onToggleFavorite }) => {
@@ -27,6 +27,12 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
                         {prompt.source}
                     </span>
                     <span className="badge category-badge">{prompt.category}</span>
+                    {prompt.fork_count > 0 && (
+                        <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', fontSize: '0.7rem' }}>
+                            <GitFork size={10} style={{ marginRight: '0.2rem' }} />
+                            {prompt.fork_count}
+                        </span>
+                    )}
                 </div>
                 <div className="card-actions" style={{ display: 'flex', gap: '0.25rem' }}>
                     <button
@@ -42,7 +48,10 @@ const PromptCard = ({ prompt, onToggleFavorite }) => {
                 </div>
             </div>
 
-            <h3 className="card-title">{prompt.title}</h3>
+            <h3 className="card-title">
+                {prompt.forked_from && <GitFork size={14} style={{ marginRight: '0.35rem', color: '#a855f7', verticalAlign: 'middle' }} />}
+                {prompt.title}
+            </h3>
             <p className="card-content">{prompt.content}</p>
 
             <div className="card-footer">
