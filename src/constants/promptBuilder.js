@@ -107,6 +107,70 @@ export const PROMPT_TEMPLATES = [
             'Solve: CORS error when calling external API',
             'Fix: Form validation not triggering on submit'
         ]
+    },
+    {
+        id: 'prd',
+        name: 'Product Requirements',
+        category: 'Business',
+        icon: 'ClipboardList',
+        description: 'Create PRDs and product specs',
+        starterExamples: [
+            'Write a PRD for a mobile app feature that allows users to save favorites',
+            'Create product requirements for an AI-powered search enhancement',
+            'Draft a one-pager for a new onboarding flow redesign',
+            'Write acceptance criteria for a user authentication feature',
+            'Create a feature spec for in-app notifications system',
+            'Draft requirements for a dashboard analytics feature',
+            'Write user stories for a checkout flow improvement'
+        ]
+    },
+    {
+        id: 'strategic-plan',
+        name: 'Strategic Planning',
+        category: 'Business',
+        icon: 'Target',
+        description: 'Build strategic plans and roadmaps',
+        starterExamples: [
+            'Create a 90-day go-to-market strategy for a B2B SaaS product',
+            'Draft a competitive analysis framework for our industry',
+            'Write a product roadmap summary for stakeholder presentation',
+            'Create OKRs for Q1 focused on user growth and retention',
+            'Draft a market expansion strategy for entering Europe',
+            'Write an executive summary for our annual planning offsite',
+            'Create a prioritization framework for our feature backlog'
+        ]
+    },
+    {
+        id: 'financial',
+        name: 'Financial Analysis',
+        category: 'Business',
+        icon: 'TrendingUp',
+        description: 'Financial models and projections',
+        starterExamples: [
+            'Create a revenue projection model for a subscription business',
+            'Draft a budget proposal for the engineering team next quarter',
+            'Write an ROI analysis for implementing a new tool',
+            'Create a pricing strategy analysis for a freemium product',
+            'Draft a cost-benefit analysis for build vs buy decision',
+            'Write a financial summary for investor update',
+            'Create unit economics breakdown for our core product'
+        ]
+    },
+    {
+        id: 'executive-comms',
+        name: 'Executive Communications',
+        category: 'Business',
+        icon: 'Briefcase',
+        description: 'Board decks, updates, and presentations',
+        starterExamples: [
+            'Write an executive summary for our monthly board meeting',
+            'Create a company all-hands presentation outline',
+            'Draft a stakeholder update on project status and risks',
+            'Write talking points for a media interview about our product',
+            'Create an investor pitch deck narrative',
+            'Draft a quarterly business review presentation',
+            'Write a change management communication for org restructure'
+        ]
     }
 ];
 

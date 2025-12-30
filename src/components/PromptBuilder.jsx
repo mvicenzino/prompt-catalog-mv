@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     X, Wand2, Copy, Check, ArrowLeft, Braces,
-    Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug
+    Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug,
+    ClipboardList, Target, TrendingUp, Briefcase
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -12,7 +13,8 @@ import {
 import { usePrompts } from '../hooks/usePrompts';
 
 const ICON_MAP = {
-    Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug
+    Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug,
+    ClipboardList, Target, TrendingUp, Briefcase
 };
 
 const PromptBuilder = ({ isOpen, onClose }) => {
