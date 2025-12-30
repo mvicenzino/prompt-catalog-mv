@@ -1,13 +1,82 @@
 import { useState, useMemo } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import {
-    TrendingUp, ChevronRight, Camera, Image, Code, PenTool, Smartphone
+    TrendingUp, ChevronRight, ChevronLeft, Camera, Image, Code, PenTool, Smartphone
 } from 'lucide-react';
 import Header from '../components/Header';
 import PromptCard from '../components/PromptCard';
 import PromptDetailModal from '../components/PromptDetailModal';
 import { usePrompts } from '../hooks/usePrompts';
 import { getSourceIcon } from '../utils/sourceIcon';
+
+// Horizontal scroll row component for Netflix-style browsing
+const ScrollableRow = ({ children, rowId }) => {
+    const scrollContainer = (id) => document.getElementById(id);
+
+    const scroll = (direction) => {
+        const container = scrollContainer(rowId);
+        if (container) {
+            const scrollAmount = container.offsetWidth * 0.8;
+            container.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    return (
+        <div className="scroll-row-container" style={{ position: 'relative' }}>
+            {/* Left scroll button - hidden on mobile */}
+            <button
+                className="scroll-btn scroll-btn-left"
+                onClick={() => scroll('left')}
+                aria-label="Scroll left"
+            >
+                <ChevronLeft size={20} />
+            </button>
+
+            <div
+                id={rowId}
+                className="horizontal-scroll-row"
+                style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    overflowX: 'auto',
+                    scrollSnapType: 'x mandatory',
+                    scrollBehavior: 'smooth',
+                    paddingBottom: '0.5rem',
+                    scrollbarWidth: 'none', // Firefox
+                    msOverflowStyle: 'none', // IE
+                }}
+            >
+                {children}
+            </div>
+
+            {/* Right scroll button - hidden on mobile */}
+            <button
+                className="scroll-btn scroll-btn-right"
+                onClick={() => scroll('right')}
+                aria-label="Scroll right"
+            >
+                <ChevronRight size={20} />
+            </button>
+        </div>
+    );
+};
+
+// Individual card wrapper for scroll snap
+const ScrollCard = ({ children, onClick }) => (
+    <div
+        onClick={onClick}
+        style={{
+            flex: '0 0 280px',
+            scrollSnapAlign: 'start',
+            cursor: 'pointer'
+        }}
+    >
+        {children}
+    </div>
+);
 
 const CATEGORIES = [
     { id: 'photos', name: 'Photos', icon: Camera, color: '#f59e0b' },
@@ -146,21 +215,17 @@ const BrowsePage = () => {
                                     Most copied & upvoted
                                 </span>
                             </div>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                gap: '0.75rem'
-                            }}>
+                            <ScrollableRow rowId="trending-row">
                                 {trendingPrompts.map(prompt => (
-                                    <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
+                                    <ScrollCard key={prompt.id} onClick={() => setSelectedPrompt(prompt)}>
                                         <PromptCard
                                             prompt={prompt}
                                             onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
                                             onVote={votePrompt}
                                         />
-                                    </div>
+                                    </ScrollCard>
                                 ))}
-                            </div>
+                            </ScrollableRow>
                         </div>
                     )}
 
@@ -206,21 +271,17 @@ const BrowsePage = () => {
                                         View all <ChevronRight size={14} />
                                     </Link>
                                 </div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                    gap: '0.75rem'
-                                }}>
+                                <ScrollableRow rowId={`category-${cat.id}-row`}>
                                     {categoryPrompts.map(prompt => (
-                                        <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
+                                        <ScrollCard key={prompt.id} onClick={() => setSelectedPrompt(prompt)}>
                                             <PromptCard
                                                 prompt={prompt}
                                                 onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
                                                 onVote={votePrompt}
                                             />
-                                        </div>
+                                        </ScrollCard>
                                     ))}
-                                </div>
+                                </ScrollableRow>
                             </div>
                         );
                     })}

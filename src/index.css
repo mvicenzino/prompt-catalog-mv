@@ -860,3 +860,92 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* Netflix-style Horizontal Scroll Row */
+.scroll-row-container {
+    position: relative;
+}
+
+.horizontal-scroll-row {
+    -webkit-overflow-scrolling: touch;
+    padding-left: 0;
+    padding-right: 1rem;
+}
+
+/* Hide scrollbar for horizontal scroll row */
+.horizontal-scroll-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* Scroll buttons */
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all var(--transition-fast);
+    opacity: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.scroll-row-container:hover .scroll-btn {
+    opacity: 1;
+}
+
+.scroll-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-highlight);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.scroll-btn-left {
+    left: -20px;
+}
+
+.scroll-btn-right {
+    right: -20px;
+}
+
+/* Hide scroll buttons on mobile (touch devices use swipe) */
+@media (max-width: 768px) {
+    .scroll-btn {
+        display: none !important;
+    }
+
+    .horizontal-scroll-row {
+        padding-left: 0;
+        scroll-padding-left: 0;
+    }
+}
+
+/* Tablet adjustment */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .scroll-btn-left {
+        left: 0;
+    }
+
+    .scroll-btn-right {
+        right: 0;
+    }
+}
+
+/* Hide mobile text in header on small screens */
+.hide-mobile {
+    display: inline;
+}
+
+@media (max-width: 640px) {
+    .hide-mobile {
+        display: none;
+    }
+}
