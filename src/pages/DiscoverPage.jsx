@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Sparkles, TrendingUp, ChevronRight, ExternalLink, Play, Copy, Check,
-    Camera, Image, Code, PenTool, Smartphone, Zap, Target, MessageSquare, BookOpen
+    Camera, Image, Code, PenTool, Smartphone, Zap, Target, MessageSquare, BookOpen,
+    Compass, Twitter, Radio
 } from 'lucide-react';
 import Header from '../components/Header';
 import PromptCard from '../components/PromptCard';
@@ -92,6 +93,93 @@ const CATEGORIES = [
     { id: 'writing', name: 'Writing', icon: PenTool, color: '#22c55e' },
     { id: 'apps', name: 'Apps', icon: Smartphone, color: '#8b5cf6' }
 ];
+
+// Follow the Puck - Stay ahead of AI trends
+const FOLLOW_THE_PUCK = {
+    youtube: [
+        {
+            name: 'Two Minute Papers',
+            handle: '@TwoMinutePapers',
+            description: 'Latest AI research explained',
+            url: 'https://www.youtube.com/@TwoMinutePapers',
+            color: '#ef4444'
+        },
+        {
+            name: 'Fireship',
+            handle: '@Fireship',
+            description: 'Fast-paced AI & dev news',
+            url: 'https://www.youtube.com/@Fireship',
+            color: '#ef4444'
+        },
+        {
+            name: 'AI Foundations',
+            handle: '@ai-foundations',
+            description: 'Enterprise AI strategy',
+            url: 'https://www.youtube.com/@ai-foundations',
+            color: '#ef4444'
+        }
+    ],
+    twitter: [
+        {
+            name: 'Sam Altman',
+            handle: '@sama',
+            description: 'OpenAI CEO',
+            url: 'https://x.com/sama',
+            color: '#000000'
+        },
+        {
+            name: 'Andrej Karpathy',
+            handle: '@karpathy',
+            description: 'Former Tesla AI, OpenAI',
+            url: 'https://x.com/karpathy',
+            color: '#000000'
+        },
+        {
+            name: 'Yann LeCun',
+            handle: '@ylecun',
+            description: 'Meta Chief AI Scientist',
+            url: 'https://x.com/ylecun',
+            color: '#000000'
+        },
+        {
+            name: 'Emad Mostaque',
+            handle: '@EMostaque',
+            description: 'Stability AI insights',
+            url: 'https://x.com/EMostaque',
+            color: '#000000'
+        }
+    ],
+    reddit: [
+        {
+            name: 'r/MachineLearning',
+            members: '3.2M',
+            description: 'ML research & papers',
+            url: 'https://reddit.com/r/MachineLearning',
+            color: '#ff4500'
+        },
+        {
+            name: 'r/artificial',
+            members: '1.8M',
+            description: 'AI news & discussion',
+            url: 'https://reddit.com/r/artificial',
+            color: '#ff4500'
+        },
+        {
+            name: 'r/LocalLLaMA',
+            members: '500K',
+            description: 'Open-source LLM community',
+            url: 'https://reddit.com/r/LocalLLaMA',
+            color: '#ff4500'
+        },
+        {
+            name: 'r/ChatGPT',
+            members: '5M+',
+            description: 'ChatGPT tips & news',
+            url: 'https://reddit.com/r/ChatGPT',
+            color: '#ff4500'
+        }
+    ]
+};
 
 // Copyable tip component
 const TipCard = ({ tip }) => {
@@ -442,6 +530,195 @@ const DiscoverPage = () => {
                                         </div>
                                     </a>
                                 ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Follow the Puck - AI Trends Aggregator */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))',
+                        borderRadius: '16px',
+                        padding: '1.5rem',
+                        marginBottom: '2.5rem',
+                        border: '1px solid rgba(34, 197, 94, 0.2)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            marginBottom: '0.5rem'
+                        }}>
+                            <div style={{
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '10px',
+                                background: 'rgba(34, 197, 94, 0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Compass size={20} style={{ color: '#22c55e' }} />
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                                    Follow the Puck
+                                </h2>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                                    "Skate to where the puck is going" — Stay ahead of AI trends
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                            gap: '1rem',
+                            marginTop: '1.25rem'
+                        }}>
+                            {/* YouTube */}
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <Play size={16} style={{ color: '#ef4444' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>YouTube</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {FOLLOW_THE_PUCK.youtube.map((channel, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={channel.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '0.5rem 0.75rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                fontSize: '0.8rem',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <div>
+                                                <div style={{ fontWeight: 500 }}>{channel.name}</div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                                    {channel.description}
+                                                </div>
+                                            </div>
+                                            <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* X / Twitter */}
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <Twitter size={16} style={{ color: 'var(--text-primary)' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>X / Twitter</span>
+                                </div>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gap: '0.5rem'
+                                }}>
+                                    {FOLLOW_THE_PUCK.twitter.map((account, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={account.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '0.5rem 0.625rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                fontSize: '0.75rem',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 600, marginBottom: '0.15rem' }}>{account.name}</div>
+                                            <div style={{ color: 'var(--accent-primary)', fontSize: '0.7rem' }}>
+                                                {account.handle}
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Reddit */}
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <Radio size={16} style={{ color: '#ff4500' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Reddit</span>
+                                </div>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gap: '0.5rem'
+                                }}>
+                                    {FOLLOW_THE_PUCK.reddit.map((sub, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={sub.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '0.5rem 0.625rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                fontSize: '0.75rem',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 600, color: '#ff4500', marginBottom: '0.15rem' }}>
+                                                {sub.name}
+                                            </div>
+                                            <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                                                {sub.members} members
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
