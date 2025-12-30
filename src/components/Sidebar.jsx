@@ -10,10 +10,11 @@ import {
     PlusCircle,
     Layers,
     Settings,
-    X
+    X,
+    Wand2
 } from 'lucide-react';
 
-const Sidebar = ({ onAddPrompt, isOpen, onClose }) => {
+const Sidebar = ({ onAddPrompt, onOpenBuilder, isOpen, onClose }) => {
     const navItems = [
         { icon: LayoutGrid, label: 'All Prompts', path: '/app' },
         { icon: Layers, label: 'Collections', path: '/app/collections' },
@@ -56,10 +57,21 @@ const Sidebar = ({ onAddPrompt, isOpen, onClose }) => {
                 ))}
             </nav>
 
-            <div className="sidebar-footer">
+            <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button
+                    className="btn btn-ghost w-full"
+                    onClick={onOpenBuilder}
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))',
+                        border: '1px solid rgba(168, 85, 247, 0.3)'
+                    }}
+                >
+                    <Wand2 size={18} style={{ color: '#a855f7' }} />
+                    <span>Prompt Builder</span>
+                </button>
                 <button className="btn btn-primary w-full" onClick={onAddPrompt}>
                     <PlusCircle size={18} />
-                    <span>New Prompt</span>
+                    <span>Quick Add</span>
                 </button>
             </div>
         </aside >

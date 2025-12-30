@@ -4,10 +4,12 @@ import { Menu, Bell } from 'lucide-react';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/clerk-react';
 import Sidebar from '../components/Sidebar';
 import AddPromptModal from '../components/AddPromptModal';
+import PromptBuilder from '../components/PromptBuilder';
 import NotificationDropdown from '../components/NotificationDropdown';
 
 const MainLayout = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBuilderOpen, setIsBuilderOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobileNotificationOpen, setIsMobileNotificationOpen] = useState(false);
     const mobileNotificationRef = useRef(null);
@@ -31,6 +33,10 @@ const MainLayout = () => {
             <Sidebar
                 onAddPrompt={() => {
                     setIsModalOpen(true);
+                    setIsSidebarOpen(false);
+                }}
+                onOpenBuilder={() => {
+                    setIsBuilderOpen(true);
                     setIsSidebarOpen(false);
                 }}
                 isOpen={isSidebarOpen}
@@ -112,6 +118,7 @@ const MainLayout = () => {
                 <Outlet />
             </main>
             <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <PromptBuilder isOpen={isBuilderOpen} onClose={() => setIsBuilderOpen(false)} />
         </div>
     );
 };
