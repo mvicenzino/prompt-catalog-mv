@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
     Sparkles, TrendingUp, ChevronRight, ExternalLink, Play, Copy, Check,
     Camera, Image, Code, PenTool, Smartphone, Zap, Target, MessageSquare, BookOpen,
-    Compass, Twitter, Radio
+    Compass, Twitter, Radio, Rocket, Building2, Brain
 } from 'lucide-react';
 import Header from '../components/Header';
 import PromptCard from '../components/PromptCard';
@@ -187,6 +187,70 @@ const FOLLOW_THE_PUCK = {
     ]
 };
 
+// 2026 and Beyond - Frontier AI developments
+const FRONTIER_AI = {
+    lastUpdated: 'Dec 29, 2025',
+    topCompanies: [
+        { name: 'OpenAI', focus: 'GPT-5, Sora, AGI research', url: 'https://openai.com/research' },
+        { name: 'Anthropic', focus: 'Claude, Constitutional AI, Safety', url: 'https://www.anthropic.com/research' },
+        { name: 'Google DeepMind', focus: 'Gemini, AlphaFold, World models', url: 'https://deepmind.google/research/' },
+        { name: 'Meta AI', focus: 'Llama, Open source LLMs', url: 'https://ai.meta.com/research/' },
+        { name: 'xAI', focus: 'Grok, Real-time reasoning', url: 'https://x.ai' }
+    ],
+    keyTrends: [
+        {
+            title: 'Agentic AI',
+            description: 'AI systems that can take actions, use tools, and complete multi-step tasks autonomously',
+            leaders: ['OpenAI (Operator)', 'Anthropic (Claude Computer Use)', 'Google (Project Mariner)']
+        },
+        {
+            title: 'World Models',
+            description: 'AI that understands physics, causality, and can simulate real-world scenarios',
+            leaders: ['Meta (V-JEPA)', 'DeepMind (Genie)', 'Runway (Gen-3)']
+        },
+        {
+            title: 'Reasoning & Planning',
+            description: 'Extended thinking, chain-of-thought, and complex problem decomposition',
+            leaders: ['OpenAI (o1/o3)', 'Anthropic (Claude 3.5)', 'DeepMind (Gemini 2.0)']
+        },
+        {
+            title: 'Multimodal Native',
+            description: 'Models that natively understand text, images, video, audio, and code together',
+            leaders: ['OpenAI (GPT-4o)', 'Google (Gemini)', 'Anthropic (Claude Vision)']
+        }
+    ],
+    mustFollow: [
+        {
+            name: 'Ilya Sutskever',
+            handle: '@ilyasut',
+            role: 'Co-founder SSI (ex-OpenAI Chief Scientist)',
+            url: 'https://x.com/ilyasut',
+            platform: 'twitter'
+        },
+        {
+            name: 'Demis Hassabis',
+            handle: '@demaborex',
+            role: 'CEO Google DeepMind',
+            url: 'https://x.com/demaborex',
+            platform: 'twitter'
+        },
+        {
+            name: 'AI Explained',
+            handle: '@AiExplained',
+            role: 'Top AI analysis channel',
+            url: 'https://www.youtube.com/@AIExplained-official',
+            platform: 'youtube'
+        },
+        {
+            name: 'The AI Breakdown',
+            handle: '@TheAIBreakdown',
+            role: 'Daily AI news & analysis',
+            url: 'https://www.youtube.com/@TheAIBreakdown',
+            platform: 'youtube'
+        }
+    ]
+};
+
 // Copyable tip component
 const TipCard = ({ tip }) => {
     const [copied, setCopied] = useState(false);
@@ -292,6 +356,18 @@ const DiscoverPage = () => {
     const { prompts, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, votePrompt, isLoaded } = usePrompts();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Get top trending prompts overall
+    const trendingPrompts = useMemo(() => {
+        return prompts
+            .slice()
+            .sort((a, b) => {
+                const scoreA = (a.upvotes || 0) - (a.downvotes || 0) + (a.stats?.copies || 0) * 2;
+                const scoreB = (b.upvotes || 0) - (b.downvotes || 0) + (b.stats?.copies || 0) * 2;
+                return scoreB - scoreA;
+            })
+            .slice(0, 8);
+    }, [prompts]);
 
     // Get top prompts by category
     const promptsByCategory = useMemo(() => {
@@ -729,6 +805,204 @@ const DiscoverPage = () => {
                         </div>
                     </div>
 
+                    {/* 2026 and Beyond - Frontier AI */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))',
+                        borderRadius: '16px',
+                        padding: '1.5rem',
+                        marginBottom: '2.5rem',
+                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '1rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <Rocket size={20} style={{ color: '#3b82f6' }} />
+                                </div>
+                                <div>
+                                    <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                                        2026 and Beyond
+                                    </h2>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                                        Where frontier AI is heading • Updated {FRONTIER_AI.lastUpdated}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Key Trends */}
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                marginBottom: '0.75rem'
+                            }}>
+                                <Brain size={16} style={{ color: '#a855f7' }} />
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Key Trends Shaping 2026</span>
+                            </div>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                                gap: '0.75rem'
+                            }}>
+                                {FRONTIER_AI.keyTrends.map((trend, idx) => (
+                                    <div key={idx} style={{
+                                        background: 'var(--bg-card)',
+                                        borderRadius: '10px',
+                                        padding: '0.875rem',
+                                        border: '1px solid var(--border-subtle)'
+                                    }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                                            {trend.title}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                            {trend.description}
+                                        </div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                            {trend.leaders.map((leader, lidx) => (
+                                                <span key={lidx} style={{
+                                                    fontSize: '0.65rem',
+                                                    padding: '0.15rem 0.4rem',
+                                                    background: 'var(--bg-input)',
+                                                    borderRadius: '4px',
+                                                    color: 'var(--text-muted)'
+                                                }}>
+                                                    {leader}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Top Companies & Must Follow */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                            gap: '1rem'
+                        }}>
+                            {/* Top Companies */}
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <Building2 size={16} style={{ color: '#3b82f6' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Leading AI Labs</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {FRONTIER_AI.topCompanies.map((company, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={company.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '0.5rem 0.625rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                fontSize: '0.8rem'
+                                            }}
+                                        >
+                                            <div>
+                                                <span style={{ fontWeight: 600 }}>{company.name}</span>
+                                                <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                                                    {company.focus}
+                                                </span>
+                                            </div>
+                                            <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Must Follow */}
+                            <div style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '12px',
+                                padding: '1rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    marginBottom: '0.75rem'
+                                }}>
+                                    <Sparkles size={16} style={{ color: '#f59e0b' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Must-Follow Voices</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {FRONTIER_AI.mustFollow.map((person, idx) => (
+                                        <a
+                                            key={idx}
+                                            href={person.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.625rem',
+                                                padding: '0.5rem 0.625rem',
+                                                background: 'var(--bg-input)',
+                                                borderRadius: '8px',
+                                                textDecoration: 'none',
+                                                color: 'inherit',
+                                                fontSize: '0.8rem'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '24px',
+                                                height: '24px',
+                                                borderRadius: '50%',
+                                                background: person.platform === 'youtube' ? '#ef444420' : 'var(--bg-card)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                {person.platform === 'youtube'
+                                                    ? <Play size={10} style={{ color: '#ef4444' }} />
+                                                    : <Twitter size={10} style={{ color: 'var(--text-primary)' }} />
+                                                }
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{person.name}</div>
+                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{person.role}</div>
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Divider with CTA */}
                     <div style={{
                         textAlign: 'center',
@@ -743,6 +1017,47 @@ const DiscoverPage = () => {
                             Browse our top-rated prompts across categories. Click to view, copy, and customize.
                         </p>
                     </div>
+
+                    {/* Top Trending Section */}
+                    {trendingPrompts.length > 0 && (
+                        <div style={{ marginBottom: '2.5rem' }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                marginBottom: '1rem'
+                            }}>
+                                <TrendingUp size={20} style={{ color: '#f59e0b' }} />
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
+                                    Top Trending
+                                </h3>
+                                <span style={{
+                                    fontSize: '0.7rem',
+                                    color: 'var(--text-muted)',
+                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15))',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '4px'
+                                }}>
+                                    Most copied & upvoted
+                                </span>
+                            </div>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                                gap: '0.75rem'
+                            }}>
+                                {trendingPrompts.map(prompt => (
+                                    <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
+                                        <PromptCard
+                                            prompt={prompt}
+                                            onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
+                                            onVote={votePrompt}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Category sections */}
                     {CATEGORIES.map(cat => {
