@@ -16,7 +16,7 @@ import {
 
 const Sidebar = ({ onAddPrompt, onOpenBuilder, isOpen, onClose }) => {
     const navItems = [
-        { icon: LayoutGrid, label: 'All Prompts', path: '/app' },
+        { icon: LayoutGrid, label: 'Discover', path: '/app' },
         { icon: Layers, label: 'Collections', path: '/app/collections' },
         { icon: Camera, label: 'Photos', path: '/app/category/photos' },
         { icon: Smartphone, label: 'Apps', path: '/app/category/apps' },

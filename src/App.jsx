@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { Toaster } from 'sonner';
+import DiscoverPage from './pages/DiscoverPage';
 import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
@@ -36,7 +37,7 @@ function App() {
                 <Route path="/p/:shareId" element={<SharedPrompt />} />
 
                 <Route path="/app" element={<ProtectedLayout />}>
-                    <Route index element={<Dashboard />} />
+                    <Route index element={<DiscoverPage />} />
                     <Route path="category/:category" element={<Dashboard />} />
                     <Route path="favorites" element={<Dashboard />} />
                     <Route path="collections" element={<Collections />} />
