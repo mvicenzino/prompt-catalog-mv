@@ -191,22 +191,38 @@ const FRONTIER_AI = {
         {
             title: 'Agentic AI',
             description: 'AI systems that can take actions, use tools, and complete multi-step tasks autonomously',
-            leaders: ['OpenAI (Operator)', 'Anthropic (Claude Computer Use)', 'Google (Project Mariner)']
+            leaders: ['OpenAI (Operator)', 'Anthropic (Claude Computer Use)', 'Google (Project Mariner)'],
+            links: [
+                { label: 'Anthropic Research', url: 'https://www.anthropic.com/research/building-effective-agents' },
+                { label: 'OpenAI Agents', url: 'https://openai.com/index/introducing-operator/' }
+            ]
         },
         {
             title: 'World Models',
             description: 'AI that understands physics, causality, and can simulate real-world scenarios',
-            leaders: ['Meta (V-JEPA)', 'DeepMind (Genie)', 'Runway (Gen-3)']
+            leaders: ['Meta (V-JEPA)', 'DeepMind (Genie)', 'Runway (Gen-3)'],
+            links: [
+                { label: 'Yann LeCun on World Models', url: 'https://www.youtube.com/watch?v=5t1vTLU7s40' },
+                { label: 'DeepMind Genie', url: 'https://deepmind.google/discover/blog/genie-2-a-large-scale-foundation-world-model/' }
+            ]
         },
         {
             title: 'Reasoning & Planning',
             description: 'Extended thinking, chain-of-thought, and complex problem decomposition',
-            leaders: ['OpenAI (o1/o3)', 'Anthropic (Claude 3.5)', 'DeepMind (Gemini 2.0)']
+            leaders: ['OpenAI (o1/o3)', 'Anthropic (Claude 3.5)', 'DeepMind (Gemini 2.0)'],
+            links: [
+                { label: 'OpenAI o3 Announcement', url: 'https://openai.com/index/deliberative-alignment/' },
+                { label: 'Chain of Thought Research', url: 'https://arxiv.org/abs/2201.11903' }
+            ]
         },
         {
             title: 'Multimodal Native',
             description: 'Models that natively understand text, images, video, audio, and code together',
-            leaders: ['OpenAI (GPT-4o)', 'Google (Gemini)', 'Anthropic (Claude Vision)']
+            leaders: ['OpenAI (GPT-4o)', 'Google (Gemini)', 'Anthropic (Claude Vision)'],
+            links: [
+                { label: 'Gemini 2.0 Overview', url: 'https://deepmind.google/technologies/gemini/' },
+                { label: 'GPT-4o Capabilities', url: 'https://openai.com/index/hello-gpt-4o/' }
+            ]
         }
     ],
     mustFollow: [
@@ -792,7 +808,7 @@ const DiscoverPage = () => {
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                                     {trend.description}
                                 </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.5rem' }}>
                                     {trend.leaders.map((leader, lidx) => (
                                         <span key={lidx} style={{
                                             fontSize: '0.65rem',
@@ -805,6 +821,38 @@ const DiscoverPage = () => {
                                         </span>
                                     ))}
                                 </div>
+                                {trend.links && trend.links.length > 0 && (
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '0.5rem',
+                                        paddingTop: '0.5rem',
+                                        borderTop: '1px solid var(--border-subtle)'
+                                    }}>
+                                        {trend.links.map((link, lidx) => (
+                                            <a
+                                                key={lidx}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    fontSize: '0.65rem',
+                                                    color: 'var(--accent-primary)',
+                                                    textDecoration: 'none',
+                                                    padding: '0.2rem 0.4rem',
+                                                    background: 'var(--accent-glow)',
+                                                    borderRadius: '4px',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                {link.label}
+                                                <ExternalLink size={10} />
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
