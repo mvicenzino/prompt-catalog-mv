@@ -32,29 +32,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
-// Debug endpoint
-app.get('/api/debug', async (req, res) => {
-    try {
-        const { query } = await import('./db.js');
-        const result = await query('SELECT COUNT(*) FROM prompts');
-        res.json({
-            status: 'ok',
-            count: result.rows[0].count,
-            env: {
-                hasPostgresUrl: !!process.env.POSTGRES_URL,
-                hasDatabaseUrl: !!process.env.DATABASE_URL,
-                isVercel: process.env.VERCEL
-            }
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: 'error',
-            message: err.message,
-            stack: err.stack
-        });
-    }
-});
-
 // Only start server if not running in Vercel (serverless)
 if (process.env.VERCEL !== '1') {
     app.listen(PORT, () => {
