@@ -36,25 +36,31 @@ const QUICK_TIPS = [
     }
 ];
 
-// Learning resources - official guides
+// Learning resources - official guides (verified working Dec 2025)
 const LEARNING_RESOURCES = [
     {
-        title: "Anthropic's Prompt Guide",
-        description: "Official guide from Claude's creators",
+        title: "Anthropic Prompt Engineering",
+        description: "Official Claude prompting guide",
         url: "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview",
         type: "Official"
     },
     {
-        title: "OpenAI Best Practices",
-        description: "GPT prompting techniques",
-        url: "https://platform.openai.com/docs/guides/prompt-engineering",
+        title: "OpenAI Prompt Guide",
+        description: "GPT best practices & techniques",
+        url: "https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api",
         type: "Official"
     },
     {
         title: "Learn Prompting",
-        description: "Free comprehensive course",
+        description: "Free course with 60+ modules",
         url: "https://learnprompting.org",
         type: "Course"
+    },
+    {
+        title: "Prompt Engineering Guide",
+        description: "Community-driven resource hub",
+        url: "https://www.promptingguide.ai",
+        type: "Guide"
     }
 ];
 
@@ -94,13 +100,13 @@ const CATEGORIES = [
     { id: 'apps', name: 'Apps', icon: Smartphone, color: '#8b5cf6' }
 ];
 
-// Follow the Puck - Stay ahead of AI trends
+// Follow the Puck - Stay ahead of AI trends (verified Dec 2025)
 const FOLLOW_THE_PUCK = {
     youtube: [
         {
             name: 'Two Minute Papers',
             handle: '@TwoMinutePapers',
-            description: 'Latest AI research explained',
+            description: 'AI research in 2 minutes',
             url: 'https://www.youtube.com/@TwoMinutePapers',
             color: '#ef4444'
         },
@@ -112,10 +118,10 @@ const FOLLOW_THE_PUCK = {
             color: '#ef4444'
         },
         {
-            name: 'AI Foundations',
-            handle: '@ai-foundations',
-            description: 'Enterprise AI strategy',
-            url: 'https://www.youtube.com/@ai-foundations',
+            name: 'Yannic Kilcher',
+            handle: '@YannicKilcher',
+            description: 'Deep dive paper reviews',
+            url: 'https://www.youtube.com/@YannicKilcher',
             color: '#ef4444'
         }
     ],
@@ -130,7 +136,7 @@ const FOLLOW_THE_PUCK = {
         {
             name: 'Andrej Karpathy',
             handle: '@karpathy',
-            description: 'Former Tesla AI, OpenAI',
+            description: 'AI educator & researcher',
             url: 'https://x.com/karpathy',
             color: '#000000'
         },
@@ -142,10 +148,10 @@ const FOLLOW_THE_PUCK = {
             color: '#000000'
         },
         {
-            name: 'Emad Mostaque',
-            handle: '@EMostaque',
-            description: 'Stability AI insights',
-            url: 'https://x.com/EMostaque',
+            name: 'Dario Amodei',
+            handle: '@DarioAmodei',
+            description: 'Anthropic CEO',
+            url: 'https://x.com/DarioAmodei',
             color: '#000000'
         }
     ],

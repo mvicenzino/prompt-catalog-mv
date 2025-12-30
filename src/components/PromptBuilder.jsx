@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-    X, Wand2, Copy, Check, ArrowLeft, Braces,
+    X, Wand2, Copy, Check, ArrowLeft, Braces, Upload, File, Trash2, Info,
     Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug,
     ClipboardList, Target, TrendingUp, Briefcase
 } from 'lucide-react';
@@ -26,6 +26,9 @@ const PromptBuilder = ({ isOpen, onClose }) => {
     const [saving, setSaving] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showJsonFormat, setShowJsonFormat] = useState(false);
+    const [attachedFile, setAttachedFile] = useState(null);
+    const [fileContent, setFileContent] = useState('');
+    const [showGuidance, setShowGuidance] = useState(true);
 
     // Get current examples based on selected template
     const currentExamples = useMemo(() => {
@@ -65,8 +68,43 @@ const PromptBuilder = ({ isOpen, onClose }) => {
             setAdditionalContext('');
             setPromptTitle('');
             setShowJsonFormat(false);
+            setAttachedFile(null);
+            setFileContent('');
+            setShowGuidance(true);
         }
     }, [isOpen]);
+
+    // Handle file upload
+    const handleFileUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Check file size (max 1MB for text files)
+        if (file.size > 1024 * 1024) {
+            toast.error('File too large. Max 1MB allowed.');
+            return;
+        }
+
+        // Read text-based files
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result;
+            if (typeof content === 'string') {
+                setAttachedFile(file);
+                setFileContent(content);
+                toast.success(`Added: ${file.name}`);
+            }
+        };
+        reader.onerror = () => {
+            toast.error('Failed to read file');
+        };
+        reader.readAsText(file);
+    };
+
+    const removeFile = () => {
+        setAttachedFile(null);
+        setFileContent('');
+    };
 
     const handleSelectExample = (example) => {
         setPromptText(example);
