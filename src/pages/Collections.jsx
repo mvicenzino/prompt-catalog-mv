@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, ChevronRight, X } from 'lucide-react';
+import { Layers, Plus, ChevronRight, X, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollections } from '../hooks/useCollections';
 import { usePrompts } from '../hooks/usePrompts';
@@ -95,7 +95,25 @@ const Collections = () => {
                                         <Layers size={16} />
                                     </div>
                                     <div>
-                                        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>{collection.name}</h3>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>{collection.name}</h3>
+                                            {collection.is_auto_generated && (
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    fontSize: '0.6rem',
+                                                    padding: '0.15rem 0.4rem',
+                                                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2))',
+                                                    color: '#a855f7',
+                                                    borderRadius: '4px',
+                                                    fontWeight: 500
+                                                }}>
+                                                    <Sparkles size={10} />
+                                                    AI
+                                                </span>
+                                            )}
+                                        </div>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                             {collectionPrompts.length} prompts
                                         </span>
