@@ -3,6 +3,7 @@ import { SignIn, SignUp } from '@clerk/clerk-react';
 import { Toaster } from 'sonner';
 import DiscoverPage from './pages/DiscoverPage';
 import BrowsePage from './pages/BrowsePage';
+import LeadersPage from './pages/LeadersPage';
 import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/app" element={<ProtectedLayout />}>
                     <Route index element={<DiscoverPage />} />
                     <Route path="browse" element={<BrowsePage />} />
+                    <Route path="leaders" element={<LeadersPage />} />
                     <Route path="category/:category" element={<Dashboard />} />
                     <Route path="favorites" element={<Dashboard />} />
                     <Route path="collections" element={<Collections />} />

@@ -10,7 +10,8 @@ import {
     Layers,
     Settings,
     X,
-    Search
+    Search,
+    Users
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -23,6 +24,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: Image, label: 'Images', path: '/app/category/images' },
         { icon: Code, label: 'Coding', path: '/app/category/coding' },
         { icon: PenTool, label: 'Writing', path: '/app/category/writing' },
+        { icon: Users, label: 'Leaders & Thinkers', path: '/app/leaders' },
         { icon: Star, label: 'Favorites', path: '/app/favorites' },
         { icon: Settings, label: 'Settings', path: '/app/settings' },
     ];
