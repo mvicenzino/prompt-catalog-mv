@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu, Bell } from 'lucide-react';
+import { Menu, Bell, Wand2, PlusCircle } from 'lucide-react';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/clerk-react';
 import Sidebar from '../components/Sidebar';
 import AddPromptModal from '../components/AddPromptModal';
@@ -112,6 +112,58 @@ const MainLayout = () => {
                     onAddPrompt: () => setIsModalOpen(true)
                 }} />
             </main>
+
+            {/* Floating Action Buttons - Always visible */}
+            <div className="floating-actions" style={{
+                position: 'fixed',
+                bottom: '1.5rem',
+                right: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                zIndex: 50
+            }}>
+                <button
+                    className="btn"
+                    onClick={() => setIsModalOpen(true)}
+                    title="Quick Add Prompt"
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        padding: 0,
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-subtle)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <PlusCircle size={22} />
+                </button>
+                <button
+                    className="btn"
+                    onClick={() => setIsBuilderOpen(true)}
+                    title="Build Prompt with AI"
+                    style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        padding: 0,
+                        background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                        border: 'none',
+                        boxShadow: '0 4px 16px rgba(168, 85, 247, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white'
+                    }}
+                >
+                    <Wand2 size={24} />
+                </button>
+            </div>
+
             <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             <PromptBuilder isOpen={isBuilderOpen} onClose={() => setIsBuilderOpen(false)} />
         </div>
