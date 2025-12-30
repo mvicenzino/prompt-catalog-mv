@@ -117,7 +117,7 @@ export const useCollections = () => {
     const addPromptToCollection = async (collectionId, promptId) => {
         try {
             const token = await getToken();
-            if (!token) return;
+            if (!token) return false;
 
             const response = await fetch(`${API_URL}/${collectionId}/prompts`, {
                 method: 'POST',
@@ -133,9 +133,13 @@ export const useCollections = () => {
                 setCollections(prev => prev.map(c =>
                     c.id === collectionId ? { ...c, promptIds } : c
                 ));
+                return true;
             }
+            console.error('Failed to add prompt to collection:', response.status);
+            return false;
         } catch (error) {
             console.error('Error adding prompt to collection:', error);
+            return false;
         }
     };
 

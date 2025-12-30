@@ -98,6 +98,7 @@ const Collections = () => {
         setAiBuilding(true);
         let successCount = 0;
         let totalPromptsAdded = 0;
+        let totalPromptsFound = 0;
 
         for (const templateId of selectedTemplates) {
             const template = AI_COLLECTION_TEMPLATES.find(t => t.id === templateId);
@@ -109,15 +110,24 @@ const Collections = () => {
                 return template.keywords.some(kw => searchText.includes(kw));
             });
 
+            totalPromptsFound += matchingPrompts.length;
+            console.log(`Template ${template.name}: Found ${matchingPrompts.length} matching prompts`);
+
             // Create collection with description
             const collectionId = await createCollection(template.name, template.description);
+            console.log(`Created collection with ID: ${collectionId}`);
+
             if (collectionId) {
                 successCount++;
 
                 // Add matching prompts to the collection
                 for (const prompt of matchingPrompts) {
-                    await addPromptToCollection(collectionId, prompt.id);
-                    totalPromptsAdded++;
+                    const added = await addPromptToCollection(collectionId, prompt.id);
+                    if (added) {
+                        totalPromptsAdded++;
+                    } else {
+                        console.log(`Failed to add prompt ${prompt.id} to collection ${collectionId}`);
+                    }
                 }
             }
         }
@@ -127,9 +137,19 @@ const Collections = () => {
         setSelectedTemplates([]);
 
         if (successCount > 0) {
-            toast.success(
-                `Created ${successCount} collection${successCount > 1 ? 's' : ''} with ${totalPromptsAdded} prompts!`
-            );
+            if (totalPromptsFound === 0) {
+                toast.success(
+                    `Created ${successCount} collection${successCount > 1 ? 's' : ''}. No matching prompts found - add prompts from Browse to populate them!`
+                );
+            } else if (totalPromptsAdded === 0) {
+                toast.warning(
+                    `Created ${successCount} collection${successCount > 1 ? 's' : ''} but couldn't add prompts. Try adding prompts manually.`
+                );
+            } else {
+                toast.success(
+                    `Created ${successCount} collection${successCount > 1 ? 's' : ''} with ${totalPromptsAdded} prompts!`
+                );
+            }
         } else {
             toast.error('Failed to create collections. Please try again.');
         }
