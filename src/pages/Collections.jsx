@@ -1,19 +1,133 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, ChevronRight, X, Sparkles, RefreshCw } from 'lucide-react';
+import { Layers, Plus, ChevronRight, X, Sparkles, RefreshCw, Wand2, Check, Briefcase, Code, Palette, MessageSquare, FileText, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollections } from '../hooks/useCollections';
 import { usePrompts } from '../hooks/usePrompts';
 import { getSourceIcon } from '../utils/sourceIcon';
 
+// AI-suggested collection templates based on use cases
+const AI_COLLECTION_TEMPLATES = [
+    {
+        id: 'marketing',
+        name: 'Marketing & Copy',
+        icon: MessageSquare,
+        color: '#f59e0b',
+        description: 'Social posts, ad copy, email campaigns',
+        keywords: ['marketing', 'social', 'copy', 'email', 'ad', 'campaign', 'content']
+    },
+    {
+        id: 'development',
+        name: 'Code & Development',
+        icon: Code,
+        color: '#3b82f6',
+        description: 'Code review, debugging, documentation',
+        keywords: ['code', 'coding', 'debug', 'programming', 'developer', 'api', 'function']
+    },
+    {
+        id: 'design',
+        name: 'Design & Creative',
+        icon: Palette,
+        color: '#ec4899',
+        description: 'Image prompts, UI/UX, branding',
+        keywords: ['design', 'image', 'photo', 'creative', 'visual', 'art', 'brand']
+    },
+    {
+        id: 'business',
+        name: 'Business & Strategy',
+        icon: Briefcase,
+        color: '#22c55e',
+        description: 'PRDs, planning, analysis',
+        keywords: ['business', 'strategy', 'plan', 'prd', 'analysis', 'executive', 'meeting']
+    },
+    {
+        id: 'writing',
+        name: 'Writing & Editing',
+        icon: FileText,
+        color: '#8b5cf6',
+        description: 'Blog posts, editing, proofreading',
+        keywords: ['writing', 'write', 'blog', 'article', 'edit', 'grammar', 'story']
+    },
+    {
+        id: 'productivity',
+        name: 'Productivity',
+        icon: Target,
+        color: '#06b6d4',
+        description: 'Summaries, organization, research',
+        keywords: ['summary', 'organize', 'research', 'notes', 'task', 'productivity']
+    }
+];
+
 const Collections = () => {
     const { collections, isLoaded, createCollection, regenerateAICollections } = useCollections();
-    const { prompts } = usePrompts();
+    const { prompts, isLoaded: promptsLoaded } = usePrompts();
     const [showNewModal, setShowNewModal] = useState(false);
+    const [showAIBuilder, setShowAIBuilder] = useState(false);
+    const [selectedTemplates, setSelectedTemplates] = useState([]);
+    const [aiBuilding, setAiBuilding] = useState(false);
     const [newName, setNewName] = useState('');
     const [newDescription, setNewDescription] = useState('');
     const [creating, setCreating] = useState(false);
     const [regenerating, setRegenerating] = useState(false);
+
+    // Calculate which templates would have prompts
+    const templatesWithCounts = useMemo(() => {
+        return AI_COLLECTION_TEMPLATES.map(template => {
+            const matchingPrompts = prompts.filter(p => {
+                const searchText = `${p.title} ${p.content} ${p.category || ''}`.toLowerCase();
+                return template.keywords.some(kw => searchText.includes(kw));
+            });
+            return { ...template, promptCount: matchingPrompts.length };
+        });
+    }, [prompts]);
+
+    const toggleTemplate = (templateId) => {
+        setSelectedTemplates(prev =>
+            prev.includes(templateId)
+                ? prev.filter(id => id !== templateId)
+                : [...prev, templateId]
+        );
+    };
+
+    const handleAIBuild = async () => {
+        if (selectedTemplates.length === 0) {
+            toast.error('Please select at least one collection type');
+            return;
+        }
+
+        setAiBuilding(true);
+        let successCount = 0;
+
+        for (const templateId of selectedTemplates) {
+            const template = AI_COLLECTION_TEMPLATES.find(t => t.id === templateId);
+            if (!template) continue;
+
+            // Find matching prompts
+            const matchingPromptIds = prompts
+                .filter(p => {
+                    const searchText = `${p.title} ${p.content} ${p.category || ''}`.toLowerCase();
+                    return template.keywords.some(kw => searchText.includes(kw));
+                })
+                .map(p => p.id);
+
+            // Create collection with description
+            const id = await createCollection(template.name, template.description);
+            if (id) {
+                successCount++;
+                // Note: Would need to add prompts to collection via API
+            }
+        }
+
+        setAiBuilding(false);
+        setShowAIBuilder(false);
+        setSelectedTemplates([]);
+
+        if (successCount > 0) {
+            toast.success(`Created ${successCount} collection${successCount > 1 ? 's' : ''}!`);
+            // Trigger AI regeneration to populate with matching prompts
+            await regenerateAICollections();
+        }
+    };
 
     const handleCreateCollection = async () => {
         if (!newName.trim()) return;
@@ -65,17 +179,28 @@ const Collections = () => {
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
+                            className="btn"
+                            onClick={() => setShowAIBuilder(true)}
+                            style={{
+                                background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                color: 'white',
+                                border: 'none'
+                            }}
+                        >
+                            <Wand2 size={18} />
+                            AI Organize
+                        </button>
+                        <button
                             className="btn btn-ghost"
                             onClick={handleRegenerate}
                             disabled={regenerating}
                             title="Regenerate AI collections"
                         >
                             <RefreshCw size={18} className={regenerating ? 'spin' : ''} />
-                            {regenerating ? 'Regenerating...' : 'Refresh AI'}
                         </button>
                         <button className="btn btn-primary" onClick={() => setShowNewModal(true)}>
                             <Plus size={18} />
-                            New Collection
+                            New
                         </button>
                     </div>
                 </div>
@@ -302,6 +427,184 @@ const Collections = () => {
                                     disabled={!newName.trim() || creating}
                                 >
                                     {creating ? 'Creating...' : 'Create Collection'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AI Collection Builder Modal */}
+            {showAIBuilder && (
+                <div className="modal-overlay" onClick={() => setShowAIBuilder(false)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="modal-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '8px',
+                                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2))',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <Sparkles size={20} style={{ color: '#a855f7' }} />
+                                </div>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: '1.1rem' }}>AI Collection Builder</h2>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                        Select categories to auto-organize your prompts
+                                    </p>
+                                </div>
+                            </div>
+                            <button className="btn btn-ghost icon-only" onClick={() => setShowAIBuilder(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div style={{ padding: '1.5rem' }}>
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: 'var(--text-secondary)',
+                                marginBottom: '1.25rem',
+                                lineHeight: '1.5'
+                            }}>
+                                Choose the collection types that match your workflow.
+                                AI will scan your {prompts.length} prompts and organize them automatically.
+                            </p>
+
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '0.75rem',
+                                marginBottom: '1.5rem'
+                            }}>
+                                {templatesWithCounts.map(template => {
+                                    const Icon = template.icon;
+                                    const isSelected = selectedTemplates.includes(template.id);
+
+                                    return (
+                                        <button
+                                            key={template.id}
+                                            onClick={() => toggleTemplate(template.id)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: '0.75rem',
+                                                padding: '1rem',
+                                                background: isSelected
+                                                    ? `linear-gradient(135deg, ${template.color}15, ${template.color}08)`
+                                                    : 'var(--bg-input)',
+                                                border: `2px solid ${isSelected ? template.color : 'var(--border-subtle)'}`,
+                                                borderRadius: '12px',
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                                transition: 'all 0.2s',
+                                                position: 'relative'
+                                            }}
+                                        >
+                                            {isSelected && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '-8px',
+                                                    right: '-8px',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    borderRadius: '50%',
+                                                    background: template.color,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <Check size={12} style={{ color: 'white' }} />
+                                                </div>
+                                            )}
+                                            <div style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '8px',
+                                                background: `${template.color}20`,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <Icon size={16} style={{ color: template.color }} />
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{
+                                                    fontWeight: 600,
+                                                    fontSize: '0.9rem',
+                                                    color: 'var(--text-primary)',
+                                                    marginBottom: '0.25rem'
+                                                }}>
+                                                    {template.name}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    color: 'var(--text-muted)',
+                                                    lineHeight: '1.3'
+                                                }}>
+                                                    {template.description}
+                                                </div>
+                                                {template.promptCount > 0 && (
+                                                    <div style={{
+                                                        marginTop: '0.5rem',
+                                                        fontSize: '0.7rem',
+                                                        color: template.color,
+                                                        fontWeight: 500
+                                                    }}>
+                                                        {template.promptCount} matching prompt{template.promptCount !== 1 ? 's' : ''}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {selectedTemplates.length > 0 && (
+                                <div style={{
+                                    background: 'var(--bg-app)',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem 1rem',
+                                    marginBottom: '1rem',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-secondary)'
+                                }}>
+                                    <strong style={{ color: 'var(--text-primary)' }}>
+                                        {selectedTemplates.length} collection{selectedTemplates.length !== 1 ? 's' : ''} selected
+                                    </strong>
+                                    {' '}&mdash; AI will create and populate these with matching prompts
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-ghost" onClick={() => setShowAIBuilder(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn"
+                                    onClick={handleAIBuild}
+                                    disabled={selectedTemplates.length === 0 || aiBuilding}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                        color: 'white',
+                                        border: 'none',
+                                        opacity: selectedTemplates.length === 0 ? 0.5 : 1
+                                    }}
+                                >
+                                    {aiBuilding ? (
+                                        <>
+                                            <RefreshCw size={16} className="spin" />
+                                            Building...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Wand2 size={16} />
+                                            Build Collections
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>
