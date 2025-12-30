@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-    X, Wand2, Copy, Check, ArrowLeft,
+    X, Wand2, Copy, Check, ArrowLeft, Braces,
     Plus, Code, FileText, Image, Lightbulb, MessageCircle, Bug
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ const PromptBuilder = ({ isOpen, onClose }) => {
     const [promptTitle, setPromptTitle] = useState('');
     const [saving, setSaving] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [showJsonFormat, setShowJsonFormat] = useState(false);
 
     // Get current examples based on selected template
     const currentExamples = useMemo(() => {
@@ -42,6 +43,18 @@ const PromptBuilder = ({ isOpen, onClose }) => {
         return compilePrompt({ task: promptText, context: additionalContext });
     }, [promptText, additionalContext]);
 
+    // Generate JSON format
+    const jsonPrompt = useMemo(() => {
+        const obj = {
+            task: promptText.trim() || undefined,
+            context: additionalContext.trim() || undefined,
+            type: selectedTemplate?.name || 'Custom'
+        };
+        // Remove undefined fields
+        Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key]);
+        return JSON.stringify(obj, null, 2);
+    }, [promptText, additionalContext, selectedTemplate]);
+
     // Reset when modal opens
     useEffect(() => {
         if (isOpen) {
@@ -49,6 +62,7 @@ const PromptBuilder = ({ isOpen, onClose }) => {
             setPromptText('');
             setAdditionalContext('');
             setPromptTitle('');
+            setShowJsonFormat(false);
         }
     }, [isOpen]);
 
@@ -56,11 +70,12 @@ const PromptBuilder = ({ isOpen, onClose }) => {
         setPromptText(example);
     };
 
-    const handleCopy = async () => {
+    const handleCopy = async (useJson = false) => {
         try {
-            await navigator.clipboard.writeText(compiledPrompt);
+            const textToCopy = useJson ? jsonPrompt : compiledPrompt;
+            await navigator.clipboard.writeText(textToCopy);
             setCopied(true);
-            toast.success('Copied to clipboard!');
+            toast.success(useJson ? 'JSON copied!' : 'Copied to clipboard!');
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             toast.error('Failed to copy');
@@ -348,7 +363,7 @@ const PromptBuilder = ({ isOpen, onClose }) => {
                                 />
                             </div>
 
-                            {/* Preview */}
+                            {/* Preview with Format Toggle */}
                             {compiledPrompt && (
                                 <div style={{
                                     background: 'var(--bg-card)',
@@ -363,9 +378,50 @@ const PromptBuilder = ({ isOpen, onClose }) => {
                                         justifyContent: 'space-between',
                                         marginBottom: '0.5rem'
                                     }}>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                            Preview
-                                        </span>
+                                        {/* Format Toggle */}
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem',
+                                            background: 'var(--bg-input)',
+                                            borderRadius: '6px',
+                                            padding: '0.2rem'
+                                        }}>
+                                            <button
+                                                onClick={() => setShowJsonFormat(false)}
+                                                style={{
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: 'none',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer',
+                                                    background: !showJsonFormat ? 'var(--accent-primary)' : 'transparent',
+                                                    color: !showJsonFormat ? 'var(--text-on-accent)' : 'var(--text-muted)'
+                                                }}
+                                            >
+                                                Text
+                                            </button>
+                                            <button
+                                                onClick={() => setShowJsonFormat(true)}
+                                                style={{
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: '4px',
+                                                    border: 'none',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 500,
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    background: showJsonFormat ? 'var(--accent-primary)' : 'transparent',
+                                                    color: showJsonFormat ? 'var(--text-on-accent)' : 'var(--text-muted)'
+                                                }}
+                                            >
+                                                <Braces size={12} />
+                                                JSON
+                                            </button>
+                                        </div>
                                         <div style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -383,18 +439,33 @@ const PromptBuilder = ({ isOpen, onClose }) => {
                                             </span>
                                         </div>
                                     </div>
+
+                                    {showJsonFormat && (
+                                        <p style={{
+                                            fontSize: '0.7rem',
+                                            color: 'var(--text-muted)',
+                                            margin: '0 0 0.5rem 0',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            JSON format can improve results with some AI models
+                                        </p>
+                                    )}
+
                                     <pre style={{
                                         margin: 0,
                                         whiteSpace: 'pre-wrap',
                                         wordBreak: 'break-word',
-                                        fontFamily: 'inherit',
+                                        fontFamily: showJsonFormat ? 'monospace' : 'inherit',
                                         fontSize: '0.85rem',
                                         lineHeight: 1.5,
                                         color: 'var(--text-primary)',
                                         maxHeight: '120px',
-                                        overflow: 'auto'
+                                        overflow: 'auto',
+                                        background: showJsonFormat ? 'var(--bg-input)' : 'transparent',
+                                        padding: showJsonFormat ? '0.5rem' : 0,
+                                        borderRadius: showJsonFormat ? '4px' : 0
                                     }}>
-                                        {compiledPrompt}
+                                        {showJsonFormat ? jsonPrompt : compiledPrompt}
                                     </pre>
                                 </div>
                             )}
@@ -414,11 +485,11 @@ const PromptBuilder = ({ isOpen, onClose }) => {
                     }}>
                         <button
                             className="btn btn-ghost"
-                            onClick={handleCopy}
+                            onClick={() => handleCopy(showJsonFormat)}
                             disabled={!compiledPrompt}
                         >
                             {copied ? <Check size={16} /> : <Copy size={16} />}
-                            {copied ? 'Copied!' : 'Copy'}
+                            {copied ? 'Copied!' : (showJsonFormat ? 'Copy JSON' : 'Copy')}
                         </button>
                         <button
                             className="btn btn-primary"
