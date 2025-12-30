@@ -59,7 +59,7 @@ const AI_COLLECTION_TEMPLATES = [
 ];
 
 const Collections = () => {
-    const { collections, isLoaded, createCollection, regenerateAICollections } = useCollections();
+    const { collections, isLoaded, createCollection, addPromptToCollection, regenerateAICollections } = useCollections();
     const { prompts, isLoaded: promptsLoaded } = usePrompts();
     const [showNewModal, setShowNewModal] = useState(false);
     const [showAIBuilder, setShowAIBuilder] = useState(false);
@@ -97,24 +97,28 @@ const Collections = () => {
 
         setAiBuilding(true);
         let successCount = 0;
+        let totalPromptsAdded = 0;
 
         for (const templateId of selectedTemplates) {
             const template = AI_COLLECTION_TEMPLATES.find(t => t.id === templateId);
             if (!template) continue;
 
             // Find matching prompts
-            const matchingPromptIds = prompts
-                .filter(p => {
-                    const searchText = `${p.title} ${p.content} ${p.category || ''}`.toLowerCase();
-                    return template.keywords.some(kw => searchText.includes(kw));
-                })
-                .map(p => p.id);
+            const matchingPrompts = prompts.filter(p => {
+                const searchText = `${p.title} ${p.content} ${p.category || ''}`.toLowerCase();
+                return template.keywords.some(kw => searchText.includes(kw));
+            });
 
             // Create collection with description
-            const id = await createCollection(template.name, template.description);
-            if (id) {
+            const collectionId = await createCollection(template.name, template.description);
+            if (collectionId) {
                 successCount++;
-                // Note: Would need to add prompts to collection via API
+
+                // Add matching prompts to the collection
+                for (const prompt of matchingPrompts) {
+                    await addPromptToCollection(collectionId, prompt.id);
+                    totalPromptsAdded++;
+                }
             }
         }
 
@@ -123,9 +127,11 @@ const Collections = () => {
         setSelectedTemplates([]);
 
         if (successCount > 0) {
-            toast.success(`Created ${successCount} collection${successCount > 1 ? 's' : ''}!`);
-            // Trigger AI regeneration to populate with matching prompts
-            await regenerateAICollections();
+            toast.success(
+                `Created ${successCount} collection${successCount > 1 ? 's' : ''} with ${totalPromptsAdded} prompts!`
+            );
+        } else {
+            toast.error('Failed to create collections. Please try again.');
         }
     };
 
