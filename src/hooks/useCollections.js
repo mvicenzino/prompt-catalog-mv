@@ -133,6 +133,31 @@ export const useCollections = () => {
         }
     };
 
+    const regenerateAICollections = async () => {
+        try {
+            const token = await getToken();
+            if (!token) return false;
+
+            const response = await fetch(`${API_URL}/regenerate`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const normalized = data.map(c => ({
+                    ...c,
+                    promptIds: Array.isArray(c.promptIds) ? c.promptIds : []
+                }));
+                setCollections(normalized);
+                return true;
+            }
+        } catch (error) {
+            console.error('Error regenerating collections:', error);
+        }
+        return false;
+    };
+
     return {
         collections,
         isLoaded,
@@ -140,6 +165,7 @@ export const useCollections = () => {
         deleteCollection,
         addPromptToCollection,
         removePromptFromCollection,
+        regenerateAICollections,
         refreshCollections: fetchCollections
     };
 };

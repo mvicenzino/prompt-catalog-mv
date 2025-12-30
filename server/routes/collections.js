@@ -38,8 +38,26 @@ const DEFAULT_COLLECTIONS = [
     }
 ];
 
+// Ensure user has prompts (seed from templates if needed)
+async function ensureUserHasPrompts(userId) {
+    const userPromptsCount = await query('SELECT count(*) FROM prompts WHERE user_id = $1', [userId]);
+
+    if (parseInt(userPromptsCount.rows[0].count) === 0) {
+        // Auto-seed: Copy public templates to this user
+        await query(`
+            INSERT INTO prompts (user_id, title, content, category, source, tags, is_public, attachment, created_at)
+            SELECT $1, title, content, category, source, tags, false, attachment, NOW()
+            FROM prompts
+            WHERE user_id IS NULL AND is_public = true
+        `, [userId]);
+    }
+}
+
 // Auto-generate default collections for a user
 async function generateDefaultCollections(userId) {
+    // First ensure user has prompts seeded
+    await ensureUserHasPrompts(userId);
+
     const collections = [];
 
     for (const template of DEFAULT_COLLECTIONS) {
@@ -52,11 +70,11 @@ async function generateDefaultCollections(userId) {
 
         const collection = collectionResult.rows[0];
 
-        // Find matching prompts based on category and keywords
+        // Find matching prompts - ONLY from user's own prompts (not templates)
         const keywordPattern = template.keywords.join('|');
         const promptsResult = await query(`
             SELECT id FROM prompts
-            WHERE (user_id = $1 OR user_id IS NULL)
+            WHERE user_id = $1
             AND (
                 category = ANY($2::text[])
                 OR title ~* $3
@@ -185,6 +203,36 @@ router.delete('/:id', authenticateToken, requireAuth, async (req, res) => {
         res.json({ message: 'Deleted successfully' });
     } catch (err) {
         console.error('Error deleting collection:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Regenerate AI collections (deletes old AI collections and creates new ones)
+router.post('/regenerate', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+
+        // Delete existing auto-generated collections
+        await query('DELETE FROM collections WHERE user_id = $1 AND is_auto_generated = true', [userId]);
+
+        // Generate new collections
+        await generateDefaultCollections(userId);
+
+        // Return all collections
+        const result = await query(`
+            SELECT c.*,
+                   COALESCE(
+                       (SELECT json_agg(cp.prompt_id) FROM collection_prompts cp WHERE cp.collection_id = c.id),
+                       '[]'
+                   ) as "promptIds"
+            FROM collections c
+            WHERE c.user_id = $1
+            ORDER BY c.is_auto_generated DESC, c.created_at DESC
+        `, [userId]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error regenerating collections:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });

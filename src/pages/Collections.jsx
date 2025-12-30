@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Layers, Plus, ChevronRight, X, Sparkles, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollections } from '../hooks/useCollections';
 import { usePrompts } from '../hooks/usePrompts';
 import { getSourceIcon } from '../utils/sourceIcon';
 
 const Collections = () => {
-    const { collections, isLoaded, createCollection } = useCollections();
+    const { collections, isLoaded, createCollection, regenerateAICollections } = useCollections();
     const { prompts } = usePrompts();
     const [showNewModal, setShowNewModal] = useState(false);
     const [newName, setNewName] = useState('');
     const [newDescription, setNewDescription] = useState('');
     const [creating, setCreating] = useState(false);
+    const [regenerating, setRegenerating] = useState(false);
 
     const handleCreateCollection = async () => {
         if (!newName.trim()) return;
@@ -26,6 +27,17 @@ const Collections = () => {
             setNewDescription('');
         } else {
             toast.error('Failed to create collection');
+        }
+    };
+
+    const handleRegenerate = async () => {
+        setRegenerating(true);
+        const success = await regenerateAICollections();
+        setRegenerating(false);
+        if (success) {
+            toast.success('AI collections regenerated!');
+        } else {
+            toast.error('Failed to regenerate collections');
         }
     };
 
@@ -51,10 +63,21 @@ const Collections = () => {
                             Stack prompts for specific workflows
                         </p>
                     </div>
-                    <button className="btn btn-primary" onClick={() => setShowNewModal(true)}>
-                        <Plus size={18} />
-                        New Collection
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            className="btn btn-ghost"
+                            onClick={handleRegenerate}
+                            disabled={regenerating}
+                            title="Regenerate AI collections"
+                        >
+                            <RefreshCw size={18} className={regenerating ? 'spin' : ''} />
+                            {regenerating ? 'Regenerating...' : 'Refresh AI'}
+                        </button>
+                        <button className="btn btn-primary" onClick={() => setShowNewModal(true)}>
+                            <Plus size={18} />
+                            New Collection
+                        </button>
+                    </div>
                 </div>
             </div>
 
