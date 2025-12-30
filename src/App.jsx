@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { Toaster } from 'sonner';
 import DiscoverPage from './pages/DiscoverPage';
+import BrowsePage from './pages/BrowsePage';
 import Dashboard from './pages/Dashboard';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
@@ -38,6 +39,7 @@ function App() {
 
                 <Route path="/app" element={<ProtectedLayout />}>
                     <Route index element={<DiscoverPage />} />
+                    <Route path="browse" element={<BrowsePage />} />
                     <Route path="category/:category" element={<Dashboard />} />
                     <Route path="favorites" element={<Dashboard />} />
                     <Route path="collections" element={<Collections />} />

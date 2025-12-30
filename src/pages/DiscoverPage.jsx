@@ -1,15 +1,13 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
 import {
-    Sparkles, TrendingUp, ChevronRight, ExternalLink, Play, Copy, Check,
-    Camera, Image, Code, PenTool, Smartphone, Zap, Target, MessageSquare, BookOpen,
-    Compass, Twitter, Radio, Rocket, Building2, Brain
+    Sparkles, ExternalLink, Play, Copy, Check, Zap, Target, MessageSquare, BookOpen,
+    Compass, Twitter, Radio, Rocket, Building2, Brain, ArrowRight, Calendar
 } from 'lucide-react';
 import Header from '../components/Header';
-import PromptCard from '../components/PromptCard';
-import PromptDetailModal from '../components/PromptDetailModal';
-import { usePrompts } from '../hooks/usePrompts';
-import { getSourceIcon } from '../utils/sourceIcon';
+
+// Page last updated timestamp
+const PAGE_LAST_UPDATED = 'Dec 29, 2025';
 
 // Quick reference - the essentials users need to know immediately
 const QUICK_TIPS = [
@@ -90,14 +88,6 @@ const LEARNING_CHANNELS = [
         url: 'https://www.youtube.com/@AIExplained-official',
         subscribers: '400K+'
     }
-];
-
-const CATEGORIES = [
-    { id: 'photos', name: 'Photos', icon: Camera, color: '#f59e0b' },
-    { id: 'images', name: 'Images', icon: Image, color: '#ec4899' },
-    { id: 'coding', name: 'Coding', icon: Code, color: '#3b82f6' },
-    { id: 'writing', name: 'Writing', icon: PenTool, color: '#22c55e' },
-    { id: 'apps', name: 'Apps', icon: Smartphone, color: '#8b5cf6' }
 ];
 
 // Follow the Puck - Stay ahead of AI trends (verified Dec 2025)
@@ -353,829 +343,600 @@ const TipCard = ({ tip }) => {
 };
 
 const DiscoverPage = () => {
-    const { prompts, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, votePrompt, isLoaded } = usePrompts();
-    const [selectedPrompt, setSelectedPrompt] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    // Get top trending prompts overall
-    const trendingPrompts = useMemo(() => {
-        return prompts
-            .slice()
-            .sort((a, b) => {
-                const scoreA = (a.upvotes || 0) - (a.downvotes || 0) + (a.stats?.copies || 0) * 2;
-                const scoreB = (b.upvotes || 0) - (b.downvotes || 0) + (b.stats?.copies || 0) * 2;
-                return scoreB - scoreA;
-            })
-            .slice(0, 8);
-    }, [prompts]);
-
-    // Get top prompts by category
-    const promptsByCategory = useMemo(() => {
-        const result = {};
-        CATEGORIES.forEach(cat => {
-            const categoryPrompts = prompts
-                .filter(p => p.category?.toLowerCase() === cat.id)
-                .sort((a, b) => {
-                    const scoreA = (a.upvotes || 0) - (a.downvotes || 0) + (a.stats?.copies || 0);
-                    const scoreB = (b.upvotes || 0) - (b.downvotes || 0) + (b.stats?.copies || 0);
-                    return scoreB - scoreA;
-                })
-                .slice(0, 4);
-            result[cat.id] = categoryPrompts;
-        });
-        return result;
-    }, [prompts]);
-
-    // Get top sources
-    const topSources = useMemo(() => {
-        const counts = {};
-        prompts.forEach(p => {
-            const source = p.source || 'Other';
-            counts[source] = (counts[source] || 0) + 1;
-        });
-        return Object.entries(counts)
-            .map(([source, count]) => ({ source, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 6);
-    }, [prompts]);
-
-    // Search filtered prompts
-    const searchResults = useMemo(() => {
-        if (!searchQuery.trim()) return [];
-        return prompts.filter(p =>
-            p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.content.toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 8);
-    }, [prompts, searchQuery]);
-
-    if (!isLoaded) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <div className="text-secondary">Loading...</div>
-            </div>
-        );
-    }
+    const { onOpenBuilder, onAddPrompt } = useOutletContext();
 
     return (
         <div>
-            <Header onSearch={setSearchQuery} />
+            <Header onOpenBuilder={onOpenBuilder} onAddPrompt={onAddPrompt} />
 
-            {/* Search results */}
-            {searchQuery.trim() && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>
-                        Search Results for "{searchQuery}"
-                    </h2>
-                    {searchResults.length > 0 ? (
-                        <div className="prompt-grid">
-                            {searchResults.map(prompt => (
-                                <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
-                                    <PromptCard
-                                        prompt={prompt}
-                                        onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
-                                        onVote={votePrompt}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p style={{ color: 'var(--text-muted)' }}>No prompts found.</p>
-                    )}
+            {/* BLUF Hero - The benefit upfront */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.1))',
+                borderRadius: '16px',
+                padding: '1.75rem 2rem',
+                marginBottom: '1.5rem',
+                border: '1px solid rgba(168, 85, 247, 0.2)'
+            }}>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
+                    Get Better AI Results in Seconds
+                </h1>
+                <p style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: '1rem',
+                    margin: '0 0 1rem 0',
+                    maxWidth: '700px',
+                    lineHeight: 1.5
+                }}>
+                    <strong>The secret:</strong> Be specific, give context, and show examples.
+                    Master the fundamentals below, then build prompts with confidence.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <Link
+                        to="/app/browse"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.6rem 1rem',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            borderRadius: '8px',
+                            textDecoration: 'none',
+                            fontSize: '0.9rem',
+                            fontWeight: 500
+                        }}
+                    >
+                        Browse Prompts <ArrowRight size={16} />
+                    </Link>
                 </div>
-            )}
+            </div>
 
-            {/* Main content */}
-            {!searchQuery.trim() && (
-                <>
-                    {/* BLUF Hero - The benefit upfront */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.1))',
-                        borderRadius: '16px',
-                        padding: '1.75rem 2rem',
-                        marginBottom: '1.5rem',
-                        border: '1px solid rgba(168, 85, 247, 0.2)'
-                    }}>
-                        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>
-                            Get Better AI Results in Seconds
-                        </h1>
-                        <p style={{
-                            color: 'var(--text-secondary)',
-                            fontSize: '1rem',
-                            margin: 0,
-                            maxWidth: '700px',
-                            lineHeight: 1.5
-                        }}>
-                            <strong>The secret:</strong> Be specific, give context, and show examples.
-                            Learn the patterns below, then grab ready-to-use prompts from our library.
-                        </p>
-                    </div>
-
-                    {/* Quick Start - Immediately visible tips */}
-                    <div style={{ marginBottom: '2rem' }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '1rem'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Sparkles size={20} style={{ color: 'var(--accent-primary)' }} />
-                                <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
-                                    The 3 Things That Actually Matter
-                                </h2>
-                            </div>
-                        </div>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                            gap: '1rem'
-                        }}>
-                            {QUICK_TIPS.map((tip, idx) => (
-                                <TipCard key={idx} tip={tip} />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Resources - Compact row */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-                        gap: '1rem',
-                        marginBottom: '2.5rem'
-                    }}>
-                        {/* Official Guides */}
-                        <div style={{
-                            background: 'var(--bg-card)',
-                            borderRadius: '12px',
-                            padding: '1.25rem',
-                            border: '1px solid var(--border-subtle)'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                marginBottom: '0.75rem'
-                            }}>
-                                <BookOpen size={18} style={{ color: 'var(--accent-primary)' }} />
-                                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>
-                                    Go Deeper
-                                </h3>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {LEARNING_RESOURCES.map((resource, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={resource.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '0.625rem 0.875rem',
-                                            background: 'var(--bg-input)',
-                                            borderRadius: '8px',
-                                            textDecoration: 'none',
-                                            color: 'inherit',
-                                            fontSize: '0.85rem',
-                                            transition: 'background 0.15s'
-                                        }}
-                                    >
-                                        <div>
-                                            <span style={{ fontWeight: 500 }}>{resource.title}</span>
-                                            <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
-                                                — {resource.description}
-                                            </span>
-                                        </div>
-                                        <ExternalLink size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* YouTube */}
-                        <div style={{
-                            background: 'var(--bg-card)',
-                            borderRadius: '12px',
-                            padding: '1.25rem',
-                            border: '1px solid var(--border-subtle)'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                marginBottom: '0.75rem'
-                            }}>
-                                <Play size={18} style={{ color: '#ef4444' }} />
-                                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>
-                                    Watch & Learn
-                                </h3>
-                            </div>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '0.5rem'
-                            }}>
-                                {LEARNING_CHANNELS.map((channel, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={channel.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.5rem 0.75rem',
-                                            background: 'var(--bg-input)',
-                                            borderRadius: '8px',
-                                            textDecoration: 'none',
-                                            color: 'inherit',
-                                            fontSize: '0.8rem'
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '28px',
-                                            height: '28px',
-                                            borderRadius: '50%',
-                                            background: '#ef444420',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0
-                                        }}>
-                                            <Play size={12} style={{ color: '#ef4444' }} />
-                                        </div>
-                                        <div>
-                                            <div style={{ fontWeight: 500, fontSize: '0.8rem' }}>{channel.name}</div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{channel.subscribers}</div>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Follow the Puck - AI Trends Aggregator */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        marginBottom: '2.5rem',
-                        border: '1px solid rgba(34, 197, 94, 0.2)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            marginBottom: '0.5rem'
-                        }}>
-                            <div style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '10px',
-                                background: 'rgba(34, 197, 94, 0.2)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
-                                <Compass size={20} style={{ color: '#22c55e' }} />
-                            </div>
-                            <div>
-                                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
-                                    Follow the Puck
-                                </h2>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
-                                    "Skate to where the puck is going" — Stay ahead of AI trends
-                                </p>
-                            </div>
-                        </div>
-
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                            gap: '1rem',
-                            marginTop: '1.25rem'
-                        }}>
-                            {/* YouTube */}
-                            <div style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                border: '1px solid var(--border-subtle)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <Play size={16} style={{ color: '#ef4444' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>YouTube</span>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {FOLLOW_THE_PUCK.youtube.map((channel, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={channel.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '0.5rem 0.75rem',
-                                                background: 'var(--bg-input)',
-                                                borderRadius: '8px',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                                fontSize: '0.8rem',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <div>
-                                                <div style={{ fontWeight: 500 }}>{channel.name}</div>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                                    {channel.description}
-                                                </div>
-                                            </div>
-                                            <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* X / Twitter */}
-                            <div style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                border: '1px solid var(--border-subtle)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <Twitter size={16} style={{ color: 'var(--text-primary)' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>X / Twitter</span>
-                                </div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr',
-                                    gap: '0.5rem'
-                                }}>
-                                    {FOLLOW_THE_PUCK.twitter.map((account, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={account.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                padding: '0.5rem 0.625rem',
-                                                background: 'var(--bg-input)',
-                                                borderRadius: '8px',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                                fontSize: '0.75rem',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <div style={{ fontWeight: 600, marginBottom: '0.15rem' }}>{account.name}</div>
-                                            <div style={{ color: 'var(--accent-primary)', fontSize: '0.7rem' }}>
-                                                {account.handle}
-                                            </div>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Reddit */}
-                            <div style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                border: '1px solid var(--border-subtle)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <Radio size={16} style={{ color: '#ff4500' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Reddit</span>
-                                </div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr',
-                                    gap: '0.5rem'
-                                }}>
-                                    {FOLLOW_THE_PUCK.reddit.map((sub, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={sub.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                padding: '0.5rem 0.625rem',
-                                                background: 'var(--bg-input)',
-                                                borderRadius: '8px',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                                fontSize: '0.75rem',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <div style={{ fontWeight: 600, color: '#ff4500', marginBottom: '0.15rem' }}>
-                                                {sub.name}
-                                            </div>
-                                            <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>
-                                                {sub.members} members
-                                            </div>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2026 and Beyond - Frontier AI */}
-                    <div style={{
-                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        marginBottom: '2.5rem',
-                        border: '1px solid rgba(59, 130, 246, 0.2)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '1rem'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '10px',
-                                    background: 'rgba(59, 130, 246, 0.2)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}>
-                                    <Rocket size={20} style={{ color: '#3b82f6' }} />
-                                </div>
-                                <div>
-                                    <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
-                                        2026 and Beyond
-                                    </h2>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                                        Where frontier AI is heading • Updated {FRONTIER_AI.lastUpdated}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Key Trends */}
-                        <div style={{ marginBottom: '1.25rem' }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                marginBottom: '0.75rem'
-                            }}>
-                                <Brain size={16} style={{ color: '#a855f7' }} />
-                                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Key Trends Shaping 2026</span>
-                            </div>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                                gap: '0.75rem'
-                            }}>
-                                {FRONTIER_AI.keyTrends.map((trend, idx) => (
-                                    <div key={idx} style={{
-                                        background: 'var(--bg-card)',
-                                        borderRadius: '10px',
-                                        padding: '0.875rem',
-                                        border: '1px solid var(--border-subtle)'
-                                    }}>
-                                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                                            {trend.title}
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                            {trend.description}
-                                        </div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                            {trend.leaders.map((leader, lidx) => (
-                                                <span key={lidx} style={{
-                                                    fontSize: '0.65rem',
-                                                    padding: '0.15rem 0.4rem',
-                                                    background: 'var(--bg-input)',
-                                                    borderRadius: '4px',
-                                                    color: 'var(--text-muted)'
-                                                }}>
-                                                    {leader}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Top Companies & Must Follow */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                            gap: '1rem'
-                        }}>
-                            {/* Top Companies */}
-                            <div style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                border: '1px solid var(--border-subtle)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <Building2 size={16} style={{ color: '#3b82f6' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Leading AI Labs</span>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {FRONTIER_AI.topCompanies.map((company, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={company.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '0.5rem 0.625rem',
-                                                background: 'var(--bg-input)',
-                                                borderRadius: '8px',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            <div>
-                                                <span style={{ fontWeight: 600 }}>{company.name}</span>
-                                                <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.7rem' }}>
-                                                    {company.focus}
-                                                </span>
-                                            </div>
-                                            <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Must Follow */}
-                            <div style={{
-                                background: 'var(--bg-card)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                border: '1px solid var(--border-subtle)'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <Sparkles size={16} style={{ color: '#f59e0b' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Must-Follow Voices</span>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    {FRONTIER_AI.mustFollow.map((person, idx) => (
-                                        <a
-                                            key={idx}
-                                            href={person.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.625rem',
-                                                padding: '0.5rem 0.625rem',
-                                                background: 'var(--bg-input)',
-                                                borderRadius: '8px',
-                                                textDecoration: 'none',
-                                                color: 'inherit',
-                                                fontSize: '0.8rem'
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '24px',
-                                                height: '24px',
-                                                borderRadius: '50%',
-                                                background: person.platform === 'youtube' ? '#ef444420' : 'var(--bg-card)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                {person.platform === 'youtube'
-                                                    ? <Play size={10} style={{ color: '#ef4444' }} />
-                                                    : <Twitter size={10} style={{ color: 'var(--text-primary)' }} />
-                                                }
-                                            </div>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{person.name}</div>
-                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{person.role}</div>
-                                            </div>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Divider with CTA */}
-                    <div style={{
-                        textAlign: 'center',
-                        marginBottom: '2rem',
-                        padding: '1.5rem 0',
-                        borderTop: '1px solid var(--border-subtle)'
-                    }}>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: '0 0 0.5rem 0' }}>
-                            Ready-to-Use Prompts
+            {/* Quick Start - Immediately visible tips */}
+            <div style={{ marginBottom: '2rem' }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '1rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sparkles size={20} style={{ color: 'var(--accent-primary)' }} />
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
+                            The 3 Things That Actually Matter
                         </h2>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
-                            Browse our top-rated prompts across categories. Click to view, copy, and customize.
-                        </p>
                     </div>
+                </div>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '1rem'
+                }}>
+                    {QUICK_TIPS.map((tip, idx) => (
+                        <TipCard key={idx} tip={tip} />
+                    ))}
+                </div>
+            </div>
 
-                    {/* Top Trending Section */}
-                    {trendingPrompts.length > 0 && (
-                        <div style={{ marginBottom: '2.5rem' }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                marginBottom: '1rem'
-                            }}>
-                                <TrendingUp size={20} style={{ color: '#f59e0b' }} />
-                                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
-                                    Top Trending
-                                </h3>
-                                <span style={{
-                                    fontSize: '0.7rem',
-                                    color: 'var(--text-muted)',
-                                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15))',
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: '4px'
-                                }}>
-                                    Most copied & upvoted
-                                </span>
-                            </div>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                gap: '0.75rem'
-                            }}>
-                                {trendingPrompts.map(prompt => (
-                                    <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
-                                        <PromptCard
-                                            prompt={prompt}
-                                            onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
-                                            onVote={votePrompt}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Category sections */}
-                    {CATEGORIES.map(cat => {
-                        const categoryPrompts = promptsByCategory[cat.id] || [];
-                        if (categoryPrompts.length === 0) return null;
-
-                        return (
-                            <div key={cat.id} style={{ marginBottom: '2rem' }}>
-                                <div style={{
+            {/* Resources - Compact row */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+                gap: '1rem',
+                marginBottom: '2.5rem'
+            }}>
+                {/* Official Guides */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    border: '1px solid var(--border-subtle)'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginBottom: '0.75rem'
+                    }}>
+                        <BookOpen size={18} style={{ color: 'var(--accent-primary)' }} />
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>
+                            Go Deeper
+                        </h3>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {LEARNING_RESOURCES.map((resource, idx) => (
+                            <a
+                                key={idx}
+                                href={resource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'space-between',
-                                    marginBottom: '0.75rem'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <cat.icon size={18} style={{ color: cat.color }} />
-                                        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>
-                                            {cat.name}
-                                        </h3>
-                                        <span style={{
-                                            fontSize: '0.75rem',
-                                            color: 'var(--text-muted)',
-                                            background: 'var(--bg-input)',
-                                            padding: '0.15rem 0.5rem',
-                                            borderRadius: '4px'
-                                        }}>
-                                            Top {categoryPrompts.length}
-                                        </span>
-                                    </div>
-                                    <Link
-                                        to={`/app/category/${cat.id}`}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.25rem',
-                                            fontSize: '0.8rem',
-                                            color: 'var(--accent-primary)',
-                                            textDecoration: 'none'
-                                        }}
-                                    >
-                                        View all <ChevronRight size={14} />
-                                    </Link>
+                                    padding: '0.625rem 0.875rem',
+                                    background: 'var(--bg-input)',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    fontSize: '0.85rem',
+                                    transition: 'background 0.15s'
+                                }}
+                            >
+                                <div>
+                                    <span style={{ fontWeight: 500 }}>{resource.title}</span>
+                                    <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                                        — {resource.description}
+                                    </span>
                                 </div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                    gap: '0.75rem'
-                                }}>
-                                    {categoryPrompts.map(prompt => (
-                                        <div key={prompt.id} onClick={() => setSelectedPrompt(prompt)} style={{ cursor: 'pointer' }}>
-                                            <PromptCard
-                                                prompt={prompt}
-                                                onToggleFavorite={(e) => { e.stopPropagation(); toggleFavorite(prompt.id); }}
-                                                onVote={votePrompt}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
+                                <ExternalLink size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                            </a>
+                        ))}
+                    </div>
+                </div>
 
-                    {/* Top Sources */}
-                    <div style={{ marginBottom: '2rem' }}>
-                        <h3 style={{
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            marginBottom: '0.75rem',
+                {/* YouTube */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    border: '1px solid var(--border-subtle)'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginBottom: '0.75rem'
+                    }}>
+                        <Play size={18} style={{ color: '#ef4444' }} />
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>
+                            Watch & Learn
+                        </h3>
+                    </div>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0.5rem'
+                    }}>
+                        {LEARNING_CHANNELS.map((channel, idx) => (
+                            <a
+                                key={idx}
+                                href={channel.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.5rem 0.75rem',
+                                    background: 'var(--bg-input)',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                <div style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '50%',
+                                    background: '#ef444420',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0
+                                }}>
+                                    <Play size={12} style={{ color: '#ef4444' }} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 500, fontSize: '0.8rem' }}>{channel.name}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{channel.subscribers}</div>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Follow the Puck - AI Trends Aggregator */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '2.5rem',
+                border: '1px solid rgba(34, 197, 94, 0.2)'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '0.5rem'
+                }}>
+                    <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        background: 'rgba(34, 197, 94, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+                        <Compass size={20} style={{ color: '#22c55e' }} />
+                    </div>
+                    <div>
+                        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                            Follow the Puck
+                        </h2>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                            "Skate to where the puck is going" — Stay ahead of AI trends
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '1rem',
+                    marginTop: '1.25rem'
+                }}>
+                    {/* YouTube */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        border: '1px solid var(--border-subtle)'
+                    }}>
+                        <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.5rem'
+                            gap: '0.5rem',
+                            marginBottom: '0.75rem'
                         }}>
-                            <TrendingUp size={18} style={{ color: 'var(--text-muted)' }} />
-                            Top Prompt Sources
-                        </h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            {topSources.map(({ source, count }) => (
-                                <div
-                                    key={source}
+                            <Play size={16} style={{ color: '#ef4444' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>YouTube</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {FOLLOW_THE_PUCK.youtube.map((channel, idx) => (
+                                <a
+                                    key={idx}
+                                    href={channel.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.5rem',
-                                        background: 'var(--bg-card)',
-                                        border: '1px solid var(--border-subtle)',
+                                        justifyContent: 'space-between',
+                                        padding: '0.5rem 0.75rem',
+                                        background: 'var(--bg-input)',
                                         borderRadius: '8px',
-                                        padding: '0.5rem 0.75rem'
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        fontSize: '0.8rem',
+                                        transition: 'all 0.15s'
                                     }}
                                 >
-                                    {getSourceIcon(source, 16)}
-                                    <span style={{ fontSize: '0.85rem' }}>{source}</span>
-                                    <span style={{
-                                        fontSize: '0.7rem',
-                                        color: 'var(--text-muted)',
-                                        background: 'var(--bg-input)',
-                                        padding: '0.15rem 0.4rem',
-                                        borderRadius: '4px'
-                                    }}>
-                                        {count}
-                                    </span>
-                                </div>
+                                    <div>
+                                        <div style={{ fontWeight: 500 }}>{channel.name}</div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                            {channel.description}
+                                        </div>
+                                    </div>
+                                    <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                </a>
                             ))}
                         </div>
                     </div>
-                </>
-            )}
 
-            <PromptDetailModal
-                prompt={selectedPrompt}
-                isOpen={!!selectedPrompt}
-                onClose={() => setSelectedPrompt(null)}
-                onDelete={() => { deletePrompt(selectedPrompt.id); setSelectedPrompt(null); }}
-                onUpdate={(updatedPrompt) => { updatePrompt(updatedPrompt); setSelectedPrompt(updatedPrompt); }}
-                onFork={async () => {
-                    const forked = await forkPrompt(selectedPrompt.id);
-                    if (forked) setSelectedPrompt(forked);
-                }}
-            />
+                    {/* X / Twitter */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        border: '1px solid var(--border-subtle)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <Twitter size={16} style={{ color: 'var(--text-primary)' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>X / Twitter</span>
+                        </div>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '0.5rem'
+                        }}>
+                            {FOLLOW_THE_PUCK.twitter.map((account, idx) => (
+                                <a
+                                    key={idx}
+                                    href={account.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        padding: '0.5rem 0.625rem',
+                                        background: 'var(--bg-input)',
+                                        borderRadius: '8px',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        fontSize: '0.75rem',
+                                        transition: 'all 0.15s'
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 600, marginBottom: '0.15rem' }}>{account.name}</div>
+                                    <div style={{ color: 'var(--accent-primary)', fontSize: '0.7rem' }}>
+                                        {account.handle}
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Reddit */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        border: '1px solid var(--border-subtle)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <Radio size={16} style={{ color: '#ff4500' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Reddit</span>
+                        </div>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '0.5rem'
+                        }}>
+                            {FOLLOW_THE_PUCK.reddit.map((sub, idx) => (
+                                <a
+                                    key={idx}
+                                    href={sub.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        padding: '0.5rem 0.625rem',
+                                        background: 'var(--bg-input)',
+                                        borderRadius: '8px',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        fontSize: '0.75rem',
+                                        transition: 'all 0.15s'
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 600, color: '#ff4500', marginBottom: '0.15rem' }}>
+                                        {sub.name}
+                                    </div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem' }}>
+                                        {sub.members} members
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2026 and Beyond - Frontier AI */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1))',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '2.5rem',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '1rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <Rocket size={20} style={{ color: '#3b82f6' }} />
+                        </div>
+                        <div>
+                            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                                2026 and Beyond
+                            </h2>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                                Where frontier AI is heading • Updated {FRONTIER_AI.lastUpdated}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Key Trends */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginBottom: '0.75rem'
+                    }}>
+                        <Brain size={16} style={{ color: '#a855f7' }} />
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Key Trends Shaping 2026</span>
+                    </div>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                        gap: '0.75rem'
+                    }}>
+                        {FRONTIER_AI.keyTrends.map((trend, idx) => (
+                            <div key={idx} style={{
+                                background: 'var(--bg-card)',
+                                borderRadius: '10px',
+                                padding: '0.875rem',
+                                border: '1px solid var(--border-subtle)'
+                            }}>
+                                <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                                    {trend.title}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                    {trend.description}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                    {trend.leaders.map((leader, lidx) => (
+                                        <span key={lidx} style={{
+                                            fontSize: '0.65rem',
+                                            padding: '0.15rem 0.4rem',
+                                            background: 'var(--bg-input)',
+                                            borderRadius: '4px',
+                                            color: 'var(--text-muted)'
+                                        }}>
+                                            {leader}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Top Companies & Must Follow */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '1rem'
+                }}>
+                    {/* Top Companies */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        border: '1px solid var(--border-subtle)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <Building2 size={16} style={{ color: '#3b82f6' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Leading AI Labs</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {FRONTIER_AI.topCompanies.map((company, idx) => (
+                                <a
+                                    key={idx}
+                                    href={company.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '0.5rem 0.625rem',
+                                        background: 'var(--bg-input)',
+                                        borderRadius: '8px',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        fontSize: '0.8rem'
+                                    }}
+                                >
+                                    <div>
+                                        <span style={{ fontWeight: 600 }}>{company.name}</span>
+                                        <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.7rem' }}>
+                                            {company.focus}
+                                        </span>
+                                    </div>
+                                    <ExternalLink size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Must Follow */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        border: '1px solid var(--border-subtle)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginBottom: '0.75rem'
+                        }}>
+                            <Sparkles size={16} style={{ color: '#f59e0b' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Must-Follow Voices</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {FRONTIER_AI.mustFollow.map((person, idx) => (
+                                <a
+                                    key={idx}
+                                    href={person.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.625rem',
+                                        padding: '0.5rem 0.625rem',
+                                        background: 'var(--bg-input)',
+                                        borderRadius: '8px',
+                                        textDecoration: 'none',
+                                        color: 'inherit',
+                                        fontSize: '0.8rem'
+                                    }}
+                                >
+                                    <div style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        background: person.platform === 'youtube' ? '#ef444420' : 'var(--bg-card)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0
+                                    }}>
+                                        {person.platform === 'youtube'
+                                            ? <Play size={10} style={{ color: '#ef4444' }} />
+                                            : <Twitter size={10} style={{ color: 'var(--text-primary)' }} />
+                                        }
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{person.name}</div>
+                                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{person.role}</div>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Page Footer with Last Updated */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '2rem 0 1rem',
+                color: 'var(--text-muted)',
+                fontSize: '0.75rem'
+            }}>
+                <Calendar size={12} />
+                <span>Content last updated: {PAGE_LAST_UPDATED}</span>
+            </div>
         </div>
     );
 };

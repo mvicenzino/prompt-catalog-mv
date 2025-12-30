@@ -31,14 +31,6 @@ const MainLayout = () => {
     return (
         <div className="layout">
             <Sidebar
-                onAddPrompt={() => {
-                    setIsModalOpen(true);
-                    setIsSidebarOpen(false);
-                }}
-                onOpenBuilder={() => {
-                    setIsBuilderOpen(true);
-                    setIsSidebarOpen(false);
-                }}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
             />
@@ -115,7 +107,10 @@ const MainLayout = () => {
             </div>
 
             <main className="main-content">
-                <Outlet />
+                <Outlet context={{
+                    onOpenBuilder: () => setIsBuilderOpen(true),
+                    onAddPrompt: () => setIsModalOpen(true)
+                }} />
             </main>
             <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             <PromptBuilder isOpen={isBuilderOpen} onClose={() => setIsBuilderOpen(false)} />
