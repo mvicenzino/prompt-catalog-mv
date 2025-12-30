@@ -87,6 +87,33 @@ export const useCollections = () => {
         }
     };
 
+    const updateCollection = async (id, name, description) => {
+        try {
+            const token = await getToken();
+            if (!token) return false;
+
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description })
+            });
+
+            if (response.ok) {
+                const updated = await response.json();
+                setCollections(prev => prev.map(c =>
+                    c.id === id ? { ...c, name: updated.name, description: updated.description } : c
+                ));
+                return true;
+            }
+        } catch (error) {
+            console.error('Error updating collection:', error);
+        }
+        return false;
+    };
+
     const addPromptToCollection = async (collectionId, promptId) => {
         try {
             const token = await getToken();
@@ -162,6 +189,7 @@ export const useCollections = () => {
         collections,
         isLoaded,
         createCollection,
+        updateCollection,
         deleteCollection,
         addPromptToCollection,
         removePromptFromCollection,

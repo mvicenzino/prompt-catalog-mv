@@ -393,13 +393,14 @@ const DiscoverPage = () => {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.5rem',
-                            padding: '0.6rem 1rem',
-                            background: 'var(--accent-primary)',
-                            color: 'white',
+                            padding: '0.6rem 1.25rem',
+                            background: 'var(--accent-gradient)',
+                            color: 'var(--text-on-accent)',
                             borderRadius: '8px',
                             textDecoration: 'none',
                             fontSize: '0.9rem',
-                            fontWeight: 500
+                            fontWeight: 600,
+                            boxShadow: '0 4px 12px var(--accent-glow)'
                         }}
                     >
                         Browse Prompts <ArrowRight size={16} />

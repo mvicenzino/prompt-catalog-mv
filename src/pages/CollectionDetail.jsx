@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, X, Layers } from 'lucide-react';
+import { ArrowLeft, Trash2, X, Layers, Edit3, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import PromptCard from '../components/PromptCard';
 import PromptDetailModal from '../components/PromptDetailModal';
@@ -10,9 +10,12 @@ import { usePrompts } from '../hooks/usePrompts';
 const CollectionDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { collections, isLoaded, deleteCollection, removePromptFromCollection } = useCollections();
+    const { collections, isLoaded, deleteCollection, removePromptFromCollection, updateCollection } = useCollections();
     const { prompts, toggleFavorite } = usePrompts();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editDescription, setEditDescription] = useState('');
 
     // ID from URL is string, database ID is number
     const collection = collections.find(c => String(c.id) === id);
@@ -54,6 +57,26 @@ const CollectionDetail = () => {
         toast.success('Prompt removed from collection');
     };
 
+    const startEditing = () => {
+        setEditName(collection.name);
+        setEditDescription(collection.description || '');
+        setIsEditing(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editName.trim()) {
+            toast.error('Collection name is required');
+            return;
+        }
+        const success = await updateCollection(collection.id, editName.trim(), editDescription.trim());
+        if (success) {
+            toast.success('Collection updated');
+            setIsEditing(false);
+        } else {
+            toast.error('Failed to update collection');
+        }
+    };
+
     return (
         <div>
             <div className="dashboard-header" style={{ marginBottom: '2rem' }}>
@@ -63,18 +86,77 @@ const CollectionDetail = () => {
                 </Link>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                        <h2 className="text-2xl font-bold" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                            {collection.name}
-                        </h2>
-                        <p className="text-secondary" style={{ fontSize: '1.1rem' }}>
-                            {collection.description}
-                        </p>
+                    <div style={{ flex: 1 }}>
+                        {isEditing ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Collection name"
+                                    style={{
+                                        fontSize: '1.5rem',
+                                        fontWeight: 700,
+                                        padding: '0.5rem 0.75rem',
+                                        background: 'var(--bg-input)',
+                                        border: '1px solid var(--border-subtle)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        width: '100%',
+                                        maxWidth: '400px'
+                                    }}
+                                    autoFocus
+                                />
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    placeholder="Description (optional)"
+                                    rows={2}
+                                    style={{
+                                        fontSize: '1rem',
+                                        padding: '0.5rem 0.75rem',
+                                        background: 'var(--bg-input)',
+                                        border: '1px solid var(--border-subtle)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        width: '100%',
+                                        maxWidth: '500px',
+                                        resize: 'none'
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-bold" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                                    {collection.name}
+                                </h2>
+                                <p className="text-secondary" style={{ fontSize: '1.1rem' }}>
+                                    {collection.description}
+                                </p>
+                            </>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-ghost icon-only" onClick={handleDelete} title="Delete Collection">
-                            <Trash2 size={20} />
-                        </button>
+                        {isEditing ? (
+                            <>
+                                <button className="btn btn-primary" onClick={handleSaveEdit}>
+                                    <Check size={18} />
+                                    Save
+                                </button>
+                                <button className="btn btn-ghost" onClick={() => setIsEditing(false)}>
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button className="btn btn-ghost icon-only" onClick={startEditing} title="Edit Collection">
+                                    <Edit3 size={20} />
+                                </button>
+                                <button className="btn btn-ghost icon-only" onClick={handleDelete} title="Delete Collection">
+                                    <Trash2 size={20} />
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
