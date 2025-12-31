@@ -335,7 +335,7 @@ const BrowsePage = () => {
                 prompt={selectedPrompt}
                 isOpen={!!selectedPrompt}
                 onClose={() => setSelectedPrompt(null)}
-                onDelete={() => { deletePrompt(selectedPrompt.id); setSelectedPrompt(null); }}
+                onDelete={async () => { const success = await deletePrompt(selectedPrompt.id); if (success) setSelectedPrompt(null); }}
                 onUpdate={(updatedPrompt) => { updatePrompt(updatedPrompt); setSelectedPrompt(updatedPrompt); }}
                 onFork={async () => {
                     const forked = await forkPrompt(selectedPrompt.id);

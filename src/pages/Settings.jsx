@@ -1,18 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { Copy, Check, Chrome, RefreshCw, Bot, Play, Calendar } from 'lucide-react';
+import { Copy, Check, Chrome, RefreshCw, Bot, Play, Calendar, Shield, CreditCard, Zap, Crown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '../components/Header';
+import { useSubscription } from '../hooks/useSubscription';
 
 const Settings = () => {
     const { getToken } = useAuth();
     const { user } = useUser();
+    const [searchParams] = useSearchParams();
+    const {
+        plan, usage, limits, isPro, isLifetime,
+        checkout, openPortal, refetch: refetchSubscription, isLoaded: subscriptionLoaded
+    } = useSubscription();
     const [token, setToken] = useState('');
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
     const [scraperStatus, setScraperStatus] = useState(null);
     const [scraperLoading, setScraperLoading] = useState(false);
     const [runningReddit, setRunningReddit] = useState(false);
+    const [checkoutLoading, setCheckoutLoading] = useState(null);
+
+    // Handle payment success/cancel from Stripe redirect
+    useEffect(() => {
+        const paymentStatus = searchParams.get('payment');
+        if (paymentStatus === 'success') {
+            toast.success('Payment successful!', {
+                description: 'Welcome to Pro! Your account has been upgraded.'
+            });
+            refetchSubscription();
+        } else if (paymentStatus === 'canceled') {
+            toast.info('Payment canceled', {
+                description: 'No charges were made.'
+            });
+        }
+    }, [searchParams, refetchSubscription]);
 
     const generateToken = useCallback(async () => {
         setLoading(true);
@@ -191,7 +214,7 @@ const Settings = () => {
                                 <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Account</h3>
                             </div>
                             <div style={{ padding: '1.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                                     {user?.imageUrl && (
                                         <img
                                             src={user.imageUrl}
@@ -213,6 +236,207 @@ const Settings = () => {
                                         </p>
                                     </div>
                                 </div>
+                                <div style={{
+                                    padding: '0.75rem 1rem',
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '8px',
+                                    fontSize: '0.8rem',
+                                    marginBottom: '1rem'
+                                }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>User ID: </span>
+                                    <code style={{ color: 'var(--text-secondary)', userSelect: 'all' }}>{user?.id}</code>
+                                </div>
+                                <Link
+                                    to="/app/admin"
+                                    className="btn btn-ghost"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}
+                                >
+                                    <Shield size={16} />
+                                    Admin Panel
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Billing Section */}
+                        <div className="card" style={{ maxWidth: '600px', marginTop: '1.5rem' }}>
+                            <div className="card-header" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <CreditCard size={20} />
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Subscription</h3>
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    Manage your plan and billing
+                                </p>
+                            </div>
+                            <div style={{ padding: '1.5rem' }}>
+                                {/* Current Plan */}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    background: isPro
+                                        ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))'
+                                        : 'var(--bg-secondary)',
+                                    borderRadius: '8px',
+                                    marginBottom: '1rem',
+                                    border: isPro ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid var(--border-subtle)'
+                                }}>
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                            {isLifetime ? (
+                                                <Crown size={18} style={{ color: '#f59e0b' }} />
+                                            ) : isPro ? (
+                                                <Zap size={18} style={{ color: 'var(--accent-primary)' }} />
+                                            ) : null}
+                                            <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                                                {isLifetime ? 'Lifetime' : isPro ? 'Pro' : 'Free'} Plan
+                                            </span>
+                                            {isPro && (
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.15rem 0.5rem',
+                                                    background: isLifetime ? 'rgba(245, 158, 11, 0.2)' : 'rgba(99, 102, 241, 0.2)',
+                                                    color: isLifetime ? '#f59e0b' : 'var(--accent-primary)',
+                                                    borderRadius: '4px'
+                                                }}>
+                                                    Active
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            {isPro
+                                                ? 'Unlimited prompts, collections, and AI features'
+                                                : `${limits.prompts} prompts, ${limits.collections} collections`}
+                                        </p>
+                                    </div>
+                                    {isPro && !isLifetime && (
+                                        <button
+                                            className="btn btn-ghost sm"
+                                            onClick={async () => {
+                                                try {
+                                                    await openPortal();
+                                                } catch (err) {
+                                                    toast.error('Failed to open billing portal');
+                                                }
+                                            }}
+                                            style={{ fontSize: '0.85rem' }}
+                                        >
+                                            Manage
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Usage Stats */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gap: '1rem',
+                                    marginBottom: '1.5rem'
+                                }}>
+                                    <div style={{
+                                        padding: '0.75rem',
+                                        background: 'var(--bg-secondary)',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                                            Prompts
+                                        </div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                                            {usage.prompts}
+                                            {!isPro && (
+                                                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                                                    {' '}/ {limits.prompts}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        padding: '0.75rem',
+                                        background: 'var(--bg-secondary)',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                                            Collections
+                                        </div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                                            {usage.collections}
+                                            {!isPro && (
+                                                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                                                    {' '}/ {limits.collections}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Upgrade CTA for free users */}
+                                {!isPro && (
+                                    <div style={{
+                                        padding: '1rem',
+                                        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(245, 158, 11, 0.1))',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(99, 102, 241, 0.2)'
+                                    }}>
+                                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem' }}>
+                                            Upgrade to Pro
+                                        </h4>
+                                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                            Get unlimited prompts, collections, and AI-powered features.
+                                        </p>
+                                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                            <button
+                                                className="btn btn-primary sm"
+                                                onClick={async () => {
+                                                    setCheckoutLoading('pro');
+                                                    try {
+                                                        await checkout('pro');
+                                                    } catch (err) {
+                                                        toast.error('Failed to start checkout');
+                                                        setCheckoutLoading(null);
+                                                    }
+                                                }}
+                                                disabled={checkoutLoading}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                            >
+                                                {checkoutLoading === 'pro' ? (
+                                                    <Loader2 size={14} className="spin" />
+                                                ) : (
+                                                    <Zap size={14} />
+                                                )}
+                                                Pro $7.99/mo
+                                            </button>
+                                            <button
+                                                className="btn sm"
+                                                onClick={async () => {
+                                                    setCheckoutLoading('lifetime');
+                                                    try {
+                                                        await checkout('lifetime');
+                                                    } catch (err) {
+                                                        toast.error('Failed to start checkout');
+                                                        setCheckoutLoading(null);
+                                                    }
+                                                }}
+                                                disabled={checkoutLoading}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    background: '#f59e0b',
+                                                    color: '#000',
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                {checkoutLoading === 'lifetime' ? (
+                                                    <Loader2 size={14} className="spin" />
+                                                ) : (
+                                                    <Crown size={14} />
+                                                )}
+                                                Lifetime $99
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

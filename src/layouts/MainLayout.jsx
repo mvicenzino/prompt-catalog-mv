@@ -6,13 +6,24 @@ import Sidebar from '../components/Sidebar';
 import AddPromptModal from '../components/AddPromptModal';
 import PromptBuilder from '../components/PromptBuilder';
 import NotificationDropdown from '../components/NotificationDropdown';
+import UpgradeModal from '../components/UpgradeModal';
+import { useSubscription } from '../hooks/useSubscription';
 
 const MainLayout = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isBuilderOpen, setIsBuilderOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobileNotificationOpen, setIsMobileNotificationOpen] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState('feature');
     const mobileNotificationRef = useRef(null);
+    const subscription = useSubscription();
+
+    // Function to show upgrade modal with reason
+    const showUpgradeModal = (reason = 'feature') => {
+        setUpgradeReason(reason);
+        setUpgradeModalOpen(true);
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -109,7 +120,9 @@ const MainLayout = () => {
             <main className="main-content">
                 <Outlet context={{
                     onOpenBuilder: () => setIsBuilderOpen(true),
-                    onAddPrompt: () => setIsModalOpen(true)
+                    onAddPrompt: () => setIsModalOpen(true),
+                    showUpgradeModal,
+                    subscription
                 }} />
             </main>
 
@@ -166,6 +179,11 @@ const MainLayout = () => {
 
             <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             <PromptBuilder isOpen={isBuilderOpen} onClose={() => setIsBuilderOpen(false)} />
+            <UpgradeModal
+                isOpen={upgradeModalOpen}
+                onClose={() => setUpgradeModalOpen(false)}
+                reason={upgradeReason}
+            />
         </div>
     );
 };

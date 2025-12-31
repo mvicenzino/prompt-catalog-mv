@@ -104,10 +104,9 @@ ${p.content}
         toast('Delete this prompt?', {
             action: {
                 label: 'Delete',
-                onClick: () => {
-                    deletePrompt(id);
-                    setSelectedPrompt(null);
-                    toast.success('Prompt deleted');
+                onClick: async () => {
+                    const success = await deletePrompt(id);
+                    if (success) setSelectedPrompt(null);
                 }
             },
             cancel: {

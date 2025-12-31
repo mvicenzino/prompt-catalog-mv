@@ -8,6 +8,12 @@ const router = express.Router();
 // Generate a short unique ID for sharing
 const generateShareId = () => crypto.randomBytes(6).toString('base64url');
 
+// Admin check helper
+const isAdmin = (userId) => {
+    const adminIds = process.env.ADMIN_USER_IDS?.split(',').map(id => id.trim()) || [];
+    return adminIds.includes(userId);
+};
+
 // Get all prompts (public + user's own)
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -126,11 +132,15 @@ router.delete('/:id', authenticateToken, requireAuth, async (req, res) => {
         const promptId = req.params.id;
         const userId = req.auth.userId;
 
-        // Check ownership
+        // Check if prompt exists
         const check = await query('SELECT * FROM prompts WHERE id = $1', [promptId]);
         if (check.rows.length === 0) return res.status(404).json({ message: 'Prompt not found' });
 
-        if (check.rows[0].user_id !== userId) {
+        // Admins can delete any prompt, others can only delete their own
+        const userIsAdmin = isAdmin(userId);
+        const isOwner = check.rows[0].user_id === userId;
+
+        if (!userIsAdmin && !isOwner) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
@@ -465,6 +475,89 @@ router.get('/:id/vote', authenticateToken, requireAuth, async (req, res) => {
 
         res.json({
             userVote: vote.rows.length > 0 ? vote.rows[0].vote_type : null
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ============= ADMIN ENDPOINTS =============
+
+// Get all default/template prompts (admin only)
+router.get('/admin/templates', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+
+        if (!isAdmin(userId)) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        const result = await query(
+            `SELECT id, title, content, category, source, tags, is_public, created_at
+             FROM prompts
+             WHERE user_id IS NULL
+             ORDER BY created_at DESC`
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Delete a default/template prompt (admin only)
+router.delete('/admin/:id', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+        const promptId = req.params.id;
+
+        if (!isAdmin(userId)) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        // Verify this is a template prompt (user_id IS NULL)
+        const check = await query('SELECT * FROM prompts WHERE id = $1', [promptId]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ message: 'Prompt not found' });
+        }
+
+        if (check.rows[0].user_id !== null) {
+            return res.status(400).json({ message: 'Can only delete template prompts (user_id must be NULL)' });
+        }
+
+        await query('DELETE FROM prompts WHERE id = $1', [promptId]);
+        res.json({ message: 'Template prompt deleted successfully', id: promptId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Bulk delete default/template prompts (admin only)
+router.post('/admin/bulk-delete', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+        const { ids } = req.body;
+
+        if (!isAdmin(userId)) {
+            return res.status(403).json({ message: 'Admin access required' });
+        }
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: 'Must provide array of prompt IDs' });
+        }
+
+        // Delete only template prompts (user_id IS NULL)
+        const result = await query(
+            `DELETE FROM prompts WHERE id = ANY($1) AND user_id IS NULL RETURNING id`,
+            [ids]
+        );
+
+        res.json({
+            message: `Deleted ${result.rows.length} template prompts`,
+            deletedIds: result.rows.map(r => r.id)
         });
     } catch (err) {
         console.error(err);

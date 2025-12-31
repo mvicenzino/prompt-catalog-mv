@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { toast } from 'sonner';
 
 const API_URL = '/api/prompts';
 
@@ -76,7 +77,7 @@ export const usePrompts = () => {
     const deletePrompt = async (id) => {
         try {
             const token = await getToken();
-            if (!token) return;
+            if (!token) return false;
             const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE',
                 headers: {
@@ -85,9 +86,25 @@ export const usePrompts = () => {
             });
             if (response.ok) {
                 setPrompts(prev => prev.filter(p => p.id !== id));
+                toast.success('Prompt deleted');
+                return true;
+            } else {
+                const error = await response.json().catch(() => ({}));
+                if (response.status === 403) {
+                    toast.error('Cannot delete this prompt', {
+                        description: 'You can only delete prompts you created'
+                    });
+                } else {
+                    toast.error('Failed to delete prompt', {
+                        description: error.message || 'Please try again'
+                    });
+                }
+                return false;
             }
         } catch (error) {
             console.error('Error deleting prompt:', error);
+            toast.error('Failed to delete prompt');
+            return false;
         }
     };
 

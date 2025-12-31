@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS collections (
     user_id VARCHAR(255) NOT NULL, -- Clerk User ID
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    is_auto_generated BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -42,3 +43,19 @@ CREATE TABLE IF NOT EXISTS collection_prompts (
     added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (collection_id, prompt_id)
 );
+
+-- User subscriptions for freemium billing
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) UNIQUE NOT NULL, -- Clerk User ID
+    stripe_customer_id VARCHAR(255),
+    stripe_subscription_id VARCHAR(255),
+    plan VARCHAR(50) DEFAULT 'free', -- 'free', 'pro', 'lifetime'
+    status VARCHAR(50) DEFAULT 'active', -- 'active', 'canceled', 'past_due'
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id);

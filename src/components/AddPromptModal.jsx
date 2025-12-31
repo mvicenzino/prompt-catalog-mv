@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { X, Sparkles, Loader2, Variable } from 'lucide-react';
 import { usePrompts } from '../hooks/usePrompts';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
@@ -181,7 +181,24 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                             onChange={e => setFormData({ ...formData, content: e.target.value })}
                             required
                             rows={4}
+                            placeholder="Write a {{tone}} email to {{recipient}} about {{topic}}..."
                         />
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginTop: '0.5rem',
+                            padding: '0.5rem 0.75rem',
+                            background: 'rgba(255, 225, 53, 0.08)',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <Variable size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+                            <span>
+                                <strong style={{ color: 'var(--accent-primary)' }}>Pro tip:</strong> Use <code style={{ background: 'rgba(255, 225, 53, 0.15)', padding: '0.1rem 0.3rem', borderRadius: '3px' }}>{'{{variable}}'}</code> to create fill-in-the-blank templates
+                            </span>
+                        </div>
                     </div>
 
                     <div className="form-group">

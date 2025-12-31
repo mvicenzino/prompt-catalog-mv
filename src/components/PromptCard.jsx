@@ -1,17 +1,81 @@
-import { useState } from 'react';
-import { Copy, Star, Check, GitFork, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Copy, Star, Check, GitFork, ThumbsUp, ThumbsDown, Variable, X, ExternalLink, Play } from 'lucide-react';
+import { toast } from 'sonner';
 import { getSourceIcon } from '../utils/sourceIcon';
+import { ChatGPTIcon, ClaudeIcon } from './AIIcons';
 
 const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isVoting, setIsVoting] = useState(false);
+    const [showVariables, setShowVariables] = useState(false);
+    const [variables, setVariables] = useState({});
+    const popoverRef = useRef(null);
+
+    // Extract variables from prompt content
+    const extractedVariables = useMemo(() => {
+        const doublebraceRegex = /\{\{([^}]+)\}\}/g;
+        const bracketRegex = /\[([^\]]+)\]/g;
+        const doublebraceMatches = [...prompt.content.matchAll(doublebraceRegex)];
+        const bracketMatches = [...prompt.content.matchAll(bracketRegex)];
+
+        const vars = {};
+        if (doublebraceMatches.length > 0) {
+            doublebraceMatches.forEach(match => {
+                vars[match[1].trim()] = '';
+            });
+        } else if (bracketMatches.length > 0) {
+            bracketMatches.forEach(match => {
+                vars[match[1].trim()] = '';
+            });
+        }
+        return vars;
+    }, [prompt.content]);
+
+    const hasVariables = Object.keys(extractedVariables).length > 0;
+
+    // Reset variables when popover opens
+    useEffect(() => {
+        if (showVariables) {
+            setVariables(extractedVariables);
+        }
+    }, [showVariables, extractedVariables]);
+
+    // Close popover when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+                setShowVariables(false);
+            }
+        };
+        if (showVariables) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showVariables]);
+
+    // Get filled content
+    const getFilledContent = () => {
+        let content = prompt.content;
+        const usesDoubleBrace = /\{\{[^}]+\}\}/.test(prompt.content);
+
+        Object.entries(variables).forEach(([key, value]) => {
+            if (value.trim()) {
+                const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (usesDoubleBrace) {
+                    content = content.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'g'), value);
+                } else {
+                    content = content.replace(new RegExp(`\\[${escapedKey}\\]`, 'g'), value);
+                }
+            }
+        });
+        return content;
+    };
 
     const handleVote = async (e, voteType) => {
         e.stopPropagation();
         if (isVoting || !onVote) return;
 
         setIsVoting(true);
-        // If clicking the same vote type, remove vote
         const newVoteType = prompt.userVote === voteType ? 'none' : voteType;
         await onVote(prompt.id, newVoteType);
         setIsVoting(false);
@@ -27,13 +91,45 @@ const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
             setTimeout(() => setIsCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
         }
     };
 
+    const handleCopyFilled = async (e) => {
+        e.stopPropagation();
+        try {
+            const filled = getFilledContent();
+            await navigator.clipboard.writeText(filled);
+            toast.success('Copied filled prompt!');
+            setShowVariables(false);
+        } catch (err) {
+            toast.error('Failed to copy');
+        }
+    };
+
+    const handleRunInAI = (e, tool) => {
+        e.stopPropagation();
+        const filled = getFilledContent();
+        let url;
+
+        if (tool === 'chatgpt') {
+            url = `https://chatgpt.com/?q=${encodeURIComponent(filled)}`;
+        } else if (tool === 'claude') {
+            url = `https://claude.ai/new?q=${encodeURIComponent(filled)}`;
+        }
+
+        navigator.clipboard.writeText(filled);
+        toast.success(`Opening ${tool === 'chatgpt' ? 'ChatGPT' : 'Claude'}...`);
+        window.open(url, '_blank');
+        setShowVariables(false);
+    };
+
+    const handleVariableClick = (e) => {
+        e.stopPropagation();
+        setShowVariables(!showVariables);
+    };
+
     return (
-        <div className="card prompt-card">
+        <div className="card prompt-card" style={{ position: 'relative' }}>
             <div className="card-header">
                 <div className="badge-group">
                     <span className="badge source-badge">
@@ -49,6 +145,16 @@ const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
                     )}
                 </div>
                 <div className="card-actions" style={{ display: 'flex', gap: '0.25rem' }}>
+                    {hasVariables && (
+                        <button
+                            className={`btn btn-ghost icon-only sm ${showVariables ? 'active' : ''}`}
+                            onClick={handleVariableClick}
+                            title="Fill variables"
+                            style={{ color: showVariables ? 'var(--accent-primary)' : undefined }}
+                        >
+                            <Variable size={16} />
+                        </button>
+                    )}
                     <button
                         className={`btn btn-ghost icon-only sm ${prompt.isFavorite ? 'text-accent' : ''}`}
                         onClick={onToggleFavorite}
@@ -73,6 +179,11 @@ const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
                     {prompt.tags?.slice(0, 2).map(tag => (
                         <span key={tag} className="tag">#{tag}</span>
                     ))}
+                    {hasVariables && (
+                        <span className="tag" style={{ background: 'rgba(255, 225, 53, 0.15)', color: 'var(--accent-primary)' }}>
+                            {Object.keys(extractedVariables).length} var{Object.keys(extractedVariables).length !== 1 ? 's' : ''}
+                        </span>
+                    )}
                 </div>
                 {onVote && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -112,6 +223,103 @@ const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
                     </div>
                 )}
             </div>
+
+            {/* Variables Popover */}
+            {showVariables && hasVariables && (
+                <div
+                    ref={popoverRef}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        marginTop: '0.5rem',
+                        padding: '1rem',
+                        background: 'var(--bg-card)',
+                        border: '1px solid rgba(255, 225, 53, 0.3)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                        zIndex: 100
+                    }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Variable size={16} style={{ color: 'var(--accent-primary)' }} />
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Fill Variables</span>
+                        </div>
+                        <button
+                            className="btn btn-ghost icon-only sm"
+                            onClick={() => setShowVariables(false)}
+                            style={{ padding: '0.15rem' }}
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                        {Object.keys(variables).map(variable => (
+                            <div key={variable}>
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    color: 'var(--text-secondary)',
+                                    marginBottom: '0.25rem'
+                                }}>
+                                    <span style={{ color: 'var(--accent-primary)' }}>{'{{'}</span>
+                                    {variable}
+                                    <span style={{ color: 'var(--accent-primary)' }}>{'}}'}</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder={`Enter ${variable}...`}
+                                    value={variables[variable]}
+                                    onChange={(e) => setVariables({ ...variables, [variable]: e.target.value })}
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.5rem 0.75rem',
+                                        fontSize: '0.85rem',
+                                        background: 'var(--bg-secondary)',
+                                        border: variables[variable] ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid var(--border-subtle)'
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <button
+                            className="btn btn-primary sm"
+                            onClick={(e) => handleRunInAI(e, 'chatgpt')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#10a37f', flex: 1 }}
+                        >
+                            <ChatGPTIcon size={14} />
+                            ChatGPT
+                        </button>
+                        <button
+                            className="btn btn-primary sm"
+                            onClick={(e) => handleRunInAI(e, 'claude')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#d97757', flex: 1 }}
+                        >
+                            <ClaudeIcon size={14} />
+                            Claude
+                        </button>
+                        <button
+                            className="btn btn-ghost sm"
+                            onClick={handleCopyFilled}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                            <Copy size={14} />
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

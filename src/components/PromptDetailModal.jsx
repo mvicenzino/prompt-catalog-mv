@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork, ExternalLink, FolderPlus, Layers } from 'lucide-react';
+import { X, Copy, Trash2, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork, ExternalLink, FolderPlus, Layers, Variable, Wand2, Sparkles } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { ChatGPTIcon, ClaudeIcon, PerplexityIcon } from './AIIcons';
@@ -19,6 +19,8 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
     const [isForking, setIsForking] = useState(false);
     const [showMoreTools, setShowMoreTools] = useState(false);
     const [showCollectionMenu, setShowCollectionMenu] = useState(false);
+    const [isImproving, setIsImproving] = useState(false);
+    const [showImprovements, setShowImprovements] = useState(null);
 
     // Track stat event
     const trackStat = useCallback(async (event) => {
@@ -41,12 +43,25 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
     // Reset variables and set initial filled content when prompt changes
     useEffect(() => {
         if (prompt) {
-            const regex = /\[(.*?)\]/g;
-            const matches = [...prompt.content.matchAll(regex)];
+            // Support both {{variable}} and [variable] syntax for backwards compatibility
+            const doublebraceRegex = /\{\{([^}]+)\}\}/g;
+            const bracketRegex = /\[([^\]]+)\]/g;
+
+            const doublebraceMatches = [...prompt.content.matchAll(doublebraceRegex)];
+            const bracketMatches = [...prompt.content.matchAll(bracketRegex)];
+
             const vars = {};
-            matches.forEach(match => {
-                vars[match[1]] = '';
+            // Prefer {{variable}} syntax
+            doublebraceMatches.forEach(match => {
+                vars[match[1].trim()] = '';
             });
+            // Fallback to [variable] for older prompts
+            if (doublebraceMatches.length === 0) {
+                bracketMatches.forEach(match => {
+                    vars[match[1].trim()] = '';
+                });
+            }
+
             setVariables(vars);
             setFilledContent(prompt.content);
             setShowHistory(false);
@@ -72,10 +87,20 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
     useEffect(() => {
         if (!prompt) return;
         let content = prompt.content;
+
+        // Check which syntax this prompt uses
+        const usesDoubleBrace = /\{\{[^}]+\}\}/.test(prompt.content);
+
         Object.entries(variables).forEach(([key, value]) => {
             if (value.trim()) {
                 const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                content = content.replace(new RegExp(`\\[${escapedKey}\\]`, 'g'), value);
+                if (usesDoubleBrace) {
+                    // Replace {{variable}} syntax
+                    content = content.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'g'), value);
+                } else {
+                    // Replace [variable] syntax (backwards compatibility)
+                    content = content.replace(new RegExp(`\\[${escapedKey}\\]`, 'g'), value);
+                }
             }
         });
         setFilledContent(content);
@@ -276,6 +301,61 @@ ${prompt.content}
         setShowCollectionMenu(false);
     };
 
+    const handleImprove = async () => {
+        setIsImproving(true);
+        setShowImprovements(null);
+        try {
+            const token = await getToken();
+            const response = await fetch('/api/ai/improve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    content: prompt.content,
+                    title: prompt.title
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to improve prompt');
+            }
+
+            const result = await response.json();
+
+            // Show the improvements in a toast
+            setShowImprovements(result);
+
+            toast.success('Prompt improved!', {
+                description: `${result.improvements?.length || 0} enhancements made`,
+                duration: 4000
+            });
+
+        } catch (err) {
+            console.error('Improve error:', err);
+            toast.error('Failed to improve prompt', {
+                description: err.message
+            });
+        } finally {
+            setIsImproving(false);
+        }
+    };
+
+    const handleApplyImprovement = () => {
+        if (!showImprovements?.improved) return;
+
+        const improvedPrompt = {
+            ...prompt,
+            content: showImprovements.improved
+        };
+
+        onUpdate(improvedPrompt);
+        toast.success('Improvement applied!');
+        setShowImprovements(null);
+    };
+
     const isInCollection = (collectionId) => {
         const collection = collections.find(c => c.id === collectionId);
         return collection?.promptIds?.includes(prompt.id);
@@ -283,6 +363,60 @@ ${prompt.content}
 
     const hasVariables = Object.keys(variables).length > 0;
     const versions = prompt.versions || [];
+
+    // Render content with highlighted variables (unfilled ones get highlighted)
+    const renderContentWithHighlights = (content, originalContent, vars) => {
+        // If all variables are filled, just return plain text
+        const allFilled = Object.values(vars).every(v => v.trim());
+        if (allFilled || Object.keys(vars).length === 0) {
+            return content;
+        }
+
+        // Check which syntax this prompt uses
+        const usesDoubleBrace = /\{\{[^}]+\}\}/.test(originalContent);
+        const regex = usesDoubleBrace ? /\{\{([^}]+)\}\}/g : /\[([^\]]+)\]/g;
+
+        // Split content and highlight unfilled variables
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(content)) !== null) {
+            // Add text before this match
+            if (match.index > lastIndex) {
+                parts.push(content.slice(lastIndex, match.index));
+            }
+
+            const varName = match[1].trim();
+            // Check if this variable is unfilled
+            if (!vars[varName] || !vars[varName].trim()) {
+                parts.push(
+                    <span
+                        key={match.index}
+                        style={{
+                            background: 'rgba(255, 225, 53, 0.2)',
+                            color: 'var(--accent-primary)',
+                            padding: '0.1rem 0.35rem',
+                            borderRadius: '4px',
+                            fontWeight: 500
+                        }}
+                    >
+                        {match[0]}
+                    </span>
+                );
+            } else {
+                parts.push(match[0]);
+            }
+            lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < content.length) {
+            parts.push(content.slice(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : content;
+    };
 
     const OTHER_TOOLS = [
         { name: 'Claude', icon: ClaudeIcon, color: '#d97757', urlBuilder: (text) => `https://claude.ai/new?q=${encodeURIComponent(text)}` },
@@ -438,13 +572,44 @@ ${prompt.content}
                 <div className="detail-content-scroll">
                     <div className="detail-section">
                         {hasVariables && (
-                            <div className="variables-section" style={{ marginBottom: '1.5rem' }}>
-                                <h3 className="text-sm font-semibold text-secondary mb-3">Fill Variables</h3>
+                            <div className="variables-section" style={{
+                                marginBottom: '1.5rem',
+                                padding: '1.25rem',
+                                background: 'rgba(255, 225, 53, 0.05)',
+                                border: '1px solid rgba(255, 225, 53, 0.2)',
+                                borderRadius: '12px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                                    <Variable size={18} style={{ color: 'var(--accent-primary)' }} />
+                                    <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                        Fill in Variables
+                                    </h3>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        padding: '0.2rem 0.5rem',
+                                        background: 'rgba(255, 225, 53, 0.2)',
+                                        color: 'var(--accent-primary)',
+                                        borderRadius: '4px',
+                                        fontWeight: 600
+                                    }}>
+                                        {Object.keys(variables).length} {Object.keys(variables).length === 1 ? 'variable' : 'variables'}
+                                    </span>
+                                </div>
                                 <div className="variables-grid" style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                                     {Object.keys(variables).map(variable => (
-                                        <div key={variable} className="form-group">
-                                            <label className="text-xs text-secondary mb-1 block" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        <div key={variable} className="form-group" style={{ margin: 0 }}>
+                                            <label style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.35rem',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 600,
+                                                color: 'var(--text-secondary)',
+                                                marginBottom: '0.4rem'
+                                            }}>
+                                                <span style={{ color: 'var(--accent-primary)' }}>{'{{'}</span>
                                                 {variable}
+                                                <span style={{ color: 'var(--accent-primary)' }}>{'}}'}</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -452,16 +617,27 @@ ${prompt.content}
                                                 placeholder={`Enter ${variable}...`}
                                                 value={variables[variable]}
                                                 onChange={(e) => handleVariableChange(variable, e.target.value)}
-                                                style={{ width: '100%' }}
+                                                style={{
+                                                    width: '100%',
+                                                    background: 'var(--bg-card)',
+                                                    border: variables[variable] ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid var(--border-subtle)'
+                                                }}
                                             />
                                         </div>
                                     ))}
                                 </div>
+                                {Object.values(variables).some(v => !v.trim()) && (
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: 0 }}>
+                                        Fill in all variables to customize your prompt before running
+                                    </p>
+                                )}
                             </div>
                         )}
 
                         <div className="prompt-display">
-                            <p className="prompt-text">{filledContent}</p>
+                            <p className="prompt-text" style={{ whiteSpace: 'pre-wrap' }}>
+                                {renderContentWithHighlights(filledContent, prompt.content, variables)}
+                            </p>
                             <div className="prompt-actions" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                     <button
@@ -512,26 +688,159 @@ ${prompt.content}
                                     </div>
                                 </div>
 
-                                <button
-                                    className={`btn btn-ghost ${isCopied ? 'text-success' : ''}`}
-                                    onClick={handleCopy}
-                                    title={hasVariables ? 'Copy Filled' : 'Copy'}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                >
-                                    {isCopied ? (
-                                        <>
-                                            <Check size={18} />
-                                            <span>Copied!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy size={18} />
-                                            <span>Copy</span>
-                                        </>
-                                    )}
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button
+                                        className="btn btn-ghost"
+                                        onClick={handleImprove}
+                                        disabled={isImproving}
+                                        title="Improve this Prompt with AI"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            color: 'var(--accent-primary)'
+                                        }}
+                                    >
+                                        {isImproving ? (
+                                            <>
+                                                <Sparkles size={18} className="spin" />
+                                                <span>Improving...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Wand2 size={18} />
+                                                <span>Improve</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        className={`btn btn-ghost ${isCopied ? 'text-success' : ''}`}
+                                        onClick={handleCopy}
+                                        title={hasVariables ? 'Copy Filled' : 'Copy'}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                    >
+                                        {isCopied ? (
+                                            <>
+                                                <Check size={18} />
+                                                <span>Copied!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy size={18} />
+                                                <span>Copy</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
+                        {/* AI Improvement Preview Panel */}
+                        {showImprovements && (
+                            <div style={{
+                                marginTop: '1.5rem',
+                                padding: '1.25rem',
+                                background: 'linear-gradient(135deg, rgba(255, 225, 53, 0.08), rgba(168, 85, 247, 0.08))',
+                                border: '1px solid rgba(255, 225, 53, 0.3)',
+                                borderRadius: '12px'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Sparkles size={20} style={{ color: 'var(--accent-primary)' }} />
+                                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>AI-Improved Version</h3>
+                                    </div>
+                                    <button
+                                        className="btn btn-ghost sm"
+                                        onClick={() => setShowImprovements(null)}
+                                        style={{ padding: '0.25rem' }}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+
+                                {showImprovements.improvements?.length > 0 && (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                            Improvements Made:
+                                        </h4>
+                                        <ul style={{
+                                            margin: 0,
+                                            paddingLeft: '1.25rem',
+                                            fontSize: '0.85rem',
+                                            color: 'var(--text-secondary)',
+                                            lineHeight: '1.6'
+                                        }}>
+                                            {showImprovements.improvements.map((improvement, idx) => (
+                                                <li key={idx} style={{ color: '#10b981' }}>{improvement}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {showImprovements.variables?.length > 0 && (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            Variables added:{' '}
+                                            {showImprovements.variables.map((v, idx) => (
+                                                <code key={idx} style={{
+                                                    background: 'rgba(255, 225, 53, 0.2)',
+                                                    color: 'var(--accent-primary)',
+                                                    padding: '0.15rem 0.35rem',
+                                                    borderRadius: '4px',
+                                                    marginRight: '0.35rem',
+                                                    fontSize: '0.75rem'
+                                                }}>
+                                                    {`{{${v}}}`}
+                                                </code>
+                                            ))}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div style={{
+                                    background: 'var(--bg-card)',
+                                    border: '1px solid var(--border-subtle)',
+                                    borderRadius: '8px',
+                                    padding: '1rem',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                    marginBottom: '1rem'
+                                }}>
+                                    <pre style={{
+                                        margin: 0,
+                                        whiteSpace: 'pre-wrap',
+                                        fontFamily: 'inherit',
+                                        fontSize: '0.9rem',
+                                        lineHeight: '1.5'
+                                    }}>
+                                        {showImprovements.improved}
+                                    </pre>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={handleApplyImprovement}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                    >
+                                        <Check size={16} />
+                                        Apply Improvement
+                                    </button>
+                                    <button
+                                        className="btn btn-ghost"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(showImprovements.improved);
+                                            toast.success('Improved prompt copied!');
+                                        }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                    >
+                                        <Copy size={16} />
+                                        Copy Only
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="tags mt-6">
                             {prompt.tags?.map(tag => (

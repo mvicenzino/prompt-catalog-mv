@@ -360,6 +360,8 @@ body {
     flex-direction: column;
     gap: var(--spacing-md);
     height: 100%;
+    overflow: visible;
+    position: relative;
 }
 
 .card-header {
