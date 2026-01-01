@@ -336,14 +336,7 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                             Quick Add
                         </button>
                         <button
-                            onClick={() => {
-                                if (!canUseAI) {
-                                    setUpgradeReason('ai_feature');
-                                    setShowUpgradeModal(true);
-                                } else {
-                                    setActiveTab('build');
-                                }
-                            }}
+                            onClick={() => setActiveTab('build')}
                             style={{
                                 flex: 1,
                                 padding: '0.75rem 1rem',
@@ -360,18 +353,14 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                 fontSize: '0.9rem'
                             }}
                         >
-                            {canUseAI ? (
-                                <Wand2 size={16} style={{ color: activeTab === 'build' ? '#a855f7' : undefined }} />
-                            ) : (
-                                <Lock size={16} />
-                            )}
+                            <Wand2 size={16} style={{ color: activeTab === 'build' ? '#a855f7' : undefined }} />
                             Build with AI
                             {!canUseAI && (
                                 <span style={{
                                     fontSize: '0.6rem',
                                     padding: '0.1rem 0.3rem',
-                                    background: 'rgba(99, 102, 241, 0.2)',
-                                    color: 'var(--accent-primary)',
+                                    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                    color: 'white',
                                     borderRadius: '3px',
                                     fontWeight: 600
                                 }}>PRO</span>
@@ -505,7 +494,63 @@ const AddPromptModal = ({ isOpen, onClose }) => {
 
                 {/* Build Tab */}
                 {activeTab === 'build' && (
-                    <div style={{ padding: '1rem', maxHeight: '60vh', overflow: 'auto' }}>
+                    <div style={{ padding: '1rem', maxHeight: '60vh', overflow: 'auto', position: 'relative' }}>
+                        {/* Pro Upgrade Overlay for Free Users */}
+                        {!canUseAI && (
+                            <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: 'rgba(0, 0, 0, 0.85)',
+                                zIndex: 10,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '2rem',
+                                textAlign: 'center',
+                                borderRadius: '0 0 12px 12px'
+                            }}>
+                                <div style={{
+                                    width: '64px',
+                                    height: '64px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginBottom: '1rem'
+                                }}>
+                                    <Wand2 size={28} style={{ color: 'white' }} />
+                                </div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem' }}>
+                                    Build Prompts with AI
+                                </h3>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                                    Use AI-powered templates to create better prompts faster. Choose from coding, writing, image generation, and more.
+                                </p>
+                                <button
+                                    className="btn"
+                                    onClick={() => {
+                                        setUpgradeReason('ai_feature');
+                                        setShowUpgradeModal(true);
+                                    }}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '0.75rem 2rem',
+                                        fontSize: '1rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    Upgrade to Pro
+                                </button>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.75rem' }}>
+                                    Starting at $7.99/month
+                                </p>
+                            </div>
+                        )}
+
                         {!selectedTemplate ? (
                             /* Template Selection */
                             <div>

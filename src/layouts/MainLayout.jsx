@@ -132,21 +132,34 @@ const MainLayout = () => {
                     position: 'fixed',
                     bottom: '1.5rem',
                     right: '1.5rem',
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '50%',
-                    padding: 0,
+                    height: '52px',
+                    borderRadius: '26px',
+                    padding: '0 1.25rem 0 1rem',
                     background: 'linear-gradient(135deg, #a855f7, #ec4899)',
                     border: 'none',
-                    boxShadow: '0 4px 16px rgba(168, 85, 247, 0.4)',
+                    boxShadow: '0 4px 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap: '0.5rem',
                     color: 'white',
-                    zIndex: 50
+                    zIndex: 50,
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                }}
+                onMouseOver={e => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(168, 85, 247, 0.6), 0 0 50px rgba(168, 85, 247, 0.3)';
+                }}
+                onMouseOut={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(168, 85, 247, 0.5), 0 0 40px rgba(168, 85, 247, 0.2)';
                 }}
             >
-                <PlusCircle size={24} />
+                <PlusCircle size={22} />
+                <span>Add Prompt</span>
             </button>
 
             <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
