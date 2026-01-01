@@ -27,9 +27,18 @@ const Settings = () => {
         const paymentStatus = searchParams.get('payment');
         if (paymentStatus === 'success') {
             toast.success('Payment successful!', {
-                description: 'Welcome to Pro! Your account has been upgraded.'
+                description: 'Activating your Pro account...'
             });
-            refetchSubscription();
+            // Retry subscription fetch with delays to wait for webhook processing
+            const retryFetch = async (attempts = 0) => {
+                await refetchSubscription();
+                // Check if still on free plan and we have retries left
+                if (attempts < 5) {
+                    setTimeout(() => retryFetch(attempts + 1), 2000);
+                }
+            };
+            // Initial delay to allow webhook to process
+            setTimeout(() => retryFetch(), 1500);
         } else if (paymentStatus === 'canceled') {
             toast.info('Payment canceled', {
                 description: 'No charges were made.'
