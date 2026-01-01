@@ -628,7 +628,7 @@ const Admin = () => {
                                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ background: 'var(--bg-secondary)' }}>
-                                                    <th style={{ padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: 600 }}>User ID</th>
+                                                    <th style={{ padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: 600 }}>User</th>
                                                     <th style={{ padding: '0.6rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: 600 }}>Plan</th>
                                                     <th style={{ padding: '0.6rem 1rem', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>Prompts</th>
                                                     <th style={{ padding: '0.6rem 1rem', textAlign: 'center', fontSize: '0.8rem', fontWeight: 600 }}>Collections</th>
@@ -639,29 +639,65 @@ const Admin = () => {
                                                 {users.map((u) => (
                                                     <tr key={u.user_id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                                         <td style={{ padding: '0.6rem 1rem' }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <code style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                                    {u.user_id.slice(0, 20)}...
-                                                                </code>
-                                                                <button
-                                                                    className="btn btn-ghost icon-only"
-                                                                    onClick={() => copyUserId(u.user_id)}
-                                                                    style={{ padding: '0.2rem' }}
-                                                                    title="Copy full ID"
-                                                                >
-                                                                    <Copy size={12} />
-                                                                </button>
-                                                                {u.user_id === user?.id && (
-                                                                    <span style={{
-                                                                        fontSize: '0.65rem',
-                                                                        padding: '0.1rem 0.4rem',
-                                                                        background: 'rgba(16, 185, 129, 0.2)',
-                                                                        color: '#10b981',
-                                                                        borderRadius: '4px'
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                                {u.imageUrl ? (
+                                                                    <img
+                                                                        src={u.imageUrl}
+                                                                        alt=""
+                                                                        style={{
+                                                                            width: 32,
+                                                                            height: 32,
+                                                                            borderRadius: '50%',
+                                                                            flexShrink: 0
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div style={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: '50%',
+                                                                        background: 'var(--bg-hover)',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        flexShrink: 0
                                                                     }}>
-                                                                        You
-                                                                    </span>
+                                                                        <Users size={14} style={{ color: 'var(--text-muted)' }} />
+                                                                    </div>
                                                                 )}
+                                                                <div style={{ minWidth: 0 }}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                        <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>
+                                                                            {u.fullName || 'Unknown User'}
+                                                                        </span>
+                                                                        {u.user_id === user?.id && (
+                                                                            <span style={{
+                                                                                fontSize: '0.65rem',
+                                                                                padding: '0.1rem 0.4rem',
+                                                                                background: 'rgba(16, 185, 129, 0.2)',
+                                                                                color: '#10b981',
+                                                                                borderRadius: '4px'
+                                                                            }}>
+                                                                                You
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                        {u.email || (
+                                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                                                <code style={{ fontSize: '0.7rem' }}>{u.user_id.slice(0, 15)}...</code>
+                                                                                <button
+                                                                                    className="btn btn-ghost icon-only"
+                                                                                    onClick={() => copyUserId(u.user_id)}
+                                                                                    style={{ padding: '0.15rem' }}
+                                                                                    title="Copy full ID"
+                                                                                >
+                                                                                    <Copy size={10} />
+                                                                                </button>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td style={{ padding: '0.6rem 1rem' }}>

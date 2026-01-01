@@ -1,5 +1,6 @@
 import express from 'express';
 import Stripe from 'stripe';
+import { clerkClient } from '@clerk/clerk-sdk-node';
 import { query } from '../db.js';
 import { authenticateToken, requireAuth } from '../middleware/auth.js';
 
@@ -233,7 +234,34 @@ router.get('/admin/users', authenticateToken, requireAuth, async (req, res) => {
             LIMIT 100
         `);
 
-        res.json(result.rows);
+        // Fetch user details from Clerk for each user
+        const usersWithDetails = await Promise.all(
+            result.rows.map(async (row) => {
+                try {
+                    const clerkUser = await clerkClient.users.getUser(row.user_id);
+                    return {
+                        ...row,
+                        email: clerkUser.emailAddresses?.[0]?.emailAddress || null,
+                        firstName: clerkUser.firstName || null,
+                        lastName: clerkUser.lastName || null,
+                        fullName: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || null,
+                        imageUrl: clerkUser.imageUrl || null
+                    };
+                } catch (err) {
+                    // User might not exist in Clerk (test user)
+                    return {
+                        ...row,
+                        email: null,
+                        firstName: null,
+                        lastName: null,
+                        fullName: null,
+                        imageUrl: null
+                    };
+                }
+            })
+        );
+
+        res.json(usersWithDetails);
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Failed to fetch users' });
