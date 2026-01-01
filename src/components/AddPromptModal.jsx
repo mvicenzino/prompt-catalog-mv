@@ -336,7 +336,14 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                             Quick Add
                         </button>
                         <button
-                            onClick={() => setActiveTab('build')}
+                            onClick={() => {
+                                if (!canUseAI) {
+                                    setUpgradeReason('ai_feature');
+                                    setShowUpgradeModal(true);
+                                } else {
+                                    setActiveTab('build');
+                                }
+                            }}
                             style={{
                                 flex: 1,
                                 padding: '0.75rem 1rem',
@@ -353,8 +360,22 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                 fontSize: '0.9rem'
                             }}
                         >
-                            <Wand2 size={16} style={{ color: activeTab === 'build' ? '#a855f7' : undefined }} />
+                            {canUseAI ? (
+                                <Wand2 size={16} style={{ color: activeTab === 'build' ? '#a855f7' : undefined }} />
+                            ) : (
+                                <Lock size={16} />
+                            )}
                             Build with AI
+                            {!canUseAI && (
+                                <span style={{
+                                    fontSize: '0.6rem',
+                                    padding: '0.1rem 0.3rem',
+                                    background: 'rgba(99, 102, 241, 0.2)',
+                                    color: 'var(--accent-primary)',
+                                    borderRadius: '3px',
+                                    fontWeight: 600
+                                }}>PRO</span>
+                            )}
                         </button>
                     </div>
                 )}
