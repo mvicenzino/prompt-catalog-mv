@@ -202,5 +202,159 @@ router.post('/portal', authenticateToken, requireAuth, async (req, res) => {
 
 // Note: Webhook handler is in /api/webhooks/stripe (see routes/webhooks.js)
 
+// ============================================
+// ADMIN ROUTES (for testing & user management)
+// ============================================
+
+const isAdmin = (userId) => {
+    const adminIds = process.env.ADMIN_USER_IDS?.split(',').map(id => id.trim()) || [];
+    return adminIds.includes(userId);
+};
+
+// GET /api/billing/admin/users - List all users with subscriptions
+router.get('/admin/users', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        if (!isAdmin(req.auth.userId)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const result = await query(`
+            SELECT
+                s.user_id,
+                s.plan,
+                s.status,
+                s.stripe_customer_id,
+                s.created_at,
+                s.updated_at,
+                (SELECT COUNT(*) FROM prompts WHERE user_id = s.user_id) as prompt_count,
+                (SELECT COUNT(*) FROM collections WHERE user_id = s.user_id) as collection_count
+            FROM subscriptions s
+            ORDER BY s.created_at DESC
+            LIMIT 100
+        `);
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// PUT /api/billing/admin/users/:userId/plan - Update a user's plan (for testing)
+router.put('/admin/users/:userId/plan', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        if (!isAdmin(req.auth.userId)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { userId } = req.params;
+        const { plan } = req.body;
+
+        if (!['free', 'pro', 'lifetime'].includes(plan)) {
+            return res.status(400).json({ error: 'Invalid plan. Must be: free, pro, or lifetime' });
+        }
+
+        // Update or create subscription
+        const existing = await query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
+
+        if (existing.rows.length === 0) {
+            await query(
+                'INSERT INTO subscriptions (user_id, plan, status) VALUES ($1, $2, $3)',
+                [userId, plan, 'active']
+            );
+        } else {
+            await query(
+                'UPDATE subscriptions SET plan = $1, status = $2, updated_at = NOW() WHERE user_id = $3',
+                [plan, 'active', userId]
+            );
+        }
+
+        res.json({ success: true, userId, plan });
+    } catch (error) {
+        console.error('Error updating plan:', error);
+        res.status(500).json({ error: 'Failed to update plan' });
+    }
+});
+
+// POST /api/billing/admin/users - Create a test user subscription
+router.post('/admin/users', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        if (!isAdmin(req.auth.userId)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { userId, plan = 'free' } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ error: 'userId is required' });
+        }
+
+        if (!['free', 'pro', 'lifetime'].includes(plan)) {
+            return res.status(400).json({ error: 'Invalid plan. Must be: free, pro, or lifetime' });
+        }
+
+        // Check if user already exists
+        const existing = await query('SELECT * FROM subscriptions WHERE user_id = $1', [userId]);
+
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'User subscription already exists' });
+        }
+
+        const result = await query(
+            'INSERT INTO subscriptions (user_id, plan, status) VALUES ($1, $2, $3) RETURNING *',
+            [userId, plan, 'active']
+        );
+
+        res.json({ success: true, subscription: result.rows[0] });
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
+});
+
+// DELETE /api/billing/admin/users/:userId - Delete a user's subscription (for testing)
+router.delete('/admin/users/:userId', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        if (!isAdmin(req.auth.userId)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { userId } = req.params;
+
+        await query('DELETE FROM subscriptions WHERE user_id = $1', [userId]);
+
+        res.json({ success: true, userId });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
+// PUT /api/billing/admin/my-plan - Quick switch for admin's own plan (convenience for testing)
+router.put('/admin/my-plan', authenticateToken, requireAuth, async (req, res) => {
+    try {
+        if (!isAdmin(req.auth.userId)) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = req.auth.userId;
+        const { plan } = req.body;
+
+        if (!['free', 'pro', 'lifetime'].includes(plan)) {
+            return res.status(400).json({ error: 'Invalid plan. Must be: free, pro, or lifetime' });
+        }
+
+        await query(
+            'UPDATE subscriptions SET plan = $1, status = $2, updated_at = NOW() WHERE user_id = $3',
+            [plan, 'active', userId]
+        );
+
+        res.json({ success: true, plan });
+    } catch (error) {
+        console.error('Error updating plan:', error);
+        res.status(500).json({ error: 'Failed to update plan' });
+    }
+});
+
 export default router;
 export { getOrCreateSubscription, getUserUsage };
