@@ -85,6 +85,28 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
                 break;
             }
 
+            // Subscription created - activate pro plan
+            case 'customer.subscription.created': {
+                const subscription = event.data.object;
+                const customerId = subscription.customer;
+                const subscriptionId = subscription.id;
+                const periodEnd = new Date(subscription.current_period_end * 1000);
+
+                // Try to find user by customer ID and activate
+                await query(
+                    `UPDATE subscriptions
+                     SET plan = 'pro',
+                         status = 'active',
+                         stripe_subscription_id = $1,
+                         current_period_end = $2,
+                         updated_at = NOW()
+                     WHERE stripe_customer_id = $3`,
+                    [subscriptionId, periodEnd, customerId]
+                );
+                console.log(`Subscription created for customer ${customerId}`);
+                break;
+            }
+
             // Subscription updated - sync status and period end
             case 'customer.subscription.updated': {
                 const subscription = event.data.object;
