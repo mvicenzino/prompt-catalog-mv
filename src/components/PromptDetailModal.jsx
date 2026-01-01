@@ -433,8 +433,9 @@ ${prompt.content}
         { name: 'Perplexity', icon: PerplexityIcon, color: '#22b8cf', urlBuilder: (text) => `https://www.perplexity.ai/?q=${encodeURIComponent(text)}` },
     ];
 
-    return [createPortal(
-        <div key="detail-modal" className="modal-overlay" onClick={onClose}>
+    return (<>
+        {createPortal(
+        <div className="modal-overlay" onClick={onClose}>
             <div className="modal detail-modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div className="detail-header-content">
@@ -965,16 +966,15 @@ ${prompt.content}
             </div>
         </div>,
         document.body
-    ),
-    showUpgradeModal && (
-        <UpgradeModal
-            key="upgrade-modal"
-            isOpen={showUpgradeModal}
-            onClose={() => setShowUpgradeModal(false)}
-            reason="ai_feature"
-        />
-    )
-    ];
+    )}
+        {showUpgradeModal && (
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                reason="ai_feature"
+            />
+        )}
+    </>);
 };
 
 export default PromptDetailModal;
