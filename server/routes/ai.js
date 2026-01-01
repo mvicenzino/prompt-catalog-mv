@@ -1,6 +1,7 @@
 import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { authenticateToken, requireAuth } from '../middleware/auth.js';
+import { checkAIAccess } from '../middleware/subscription.js';
 
 const router = express.Router();
 
@@ -113,8 +114,8 @@ Respond in JSON format only:
     }
 });
 
-// Improve a prompt with better context and structure
-router.post('/improve', authenticateToken, requireAuth, async (req, res) => {
+// Improve a prompt with better context and structure (Pro only)
+router.post('/improve', authenticateToken, requireAuth, checkAIAccess, async (req, res) => {
     try {
         const { content, title } = req.body;
 
@@ -280,8 +281,8 @@ function fallbackCategorize(content, title) {
     };
 }
 
-// Batch improve prompts (admin only)
-router.post('/improve-batch', authenticateToken, requireAuth, async (req, res) => {
+// Batch improve prompts (Pro only)
+router.post('/improve-batch', authenticateToken, requireAuth, checkAIAccess, async (req, res) => {
     try {
         const { prompts } = req.body; // Array of { id, content, title }
 

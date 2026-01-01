@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Copy, Trash2, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork, ExternalLink, FolderPlus, Layers, Variable, Wand2, Sparkles } from 'lucide-react';
+import { X, Copy, Trash2, Check, History, RotateCcw, ChevronDown, ChevronUp, Share2, Download, Eye, Clipboard, Zap, GitFork, ExternalLink, FolderPlus, Layers, Variable, Wand2, Sparkles, Lock } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
 import { ChatGPTIcon, ClaudeIcon, PerplexityIcon } from './AIIcons';
 import { getSourceIcon } from '../utils/sourceIcon';
 import { useCollections } from '../hooks/useCollections';
+import { useSubscription } from '../hooks/useSubscription';
+import UpgradeModal from './UpgradeModal';
 
 const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork }) => {
     const { getToken } = useAuth();
     const { collections, addPromptToCollection } = useCollections();
+    const { canUseAI, isPro } = useSubscription();
     const [variables, setVariables] = useState({});
     const [filledContent, setFilledContent] = useState('');
     const [isCopied, setIsCopied] = useState(false);
@@ -21,6 +24,7 @@ const PromptDetailModal = ({ prompt, isOpen, onClose, onDelete, onUpdate, onFork
     const [showCollectionMenu, setShowCollectionMenu] = useState(false);
     const [isImproving, setIsImproving] = useState(false);
     const [showImprovements, setShowImprovements] = useState(null);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     // Track stat event
     const trackStat = useCallback(async (event) => {
@@ -302,6 +306,12 @@ ${prompt.content}
     };
 
     const handleImprove = async () => {
+        // Check if user has Pro access
+        if (!canUseAI) {
+            setShowUpgradeModal(true);
+            return;
+        }
+
         setIsImproving(true);
         setShowImprovements(null);
         try {
@@ -423,8 +433,8 @@ ${prompt.content}
         { name: 'Perplexity', icon: PerplexityIcon, color: '#22b8cf', urlBuilder: (text) => `https://www.perplexity.ai/?q=${encodeURIComponent(text)}` },
     ];
 
-    return createPortal(
-        <div className="modal-overlay" onClick={onClose}>
+    return [createPortal(
+        <div key="detail-modal" className="modal-overlay" onClick={onClose}>
             <div className="modal detail-modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div className="detail-header-content">
@@ -693,12 +703,12 @@ ${prompt.content}
                                         className="btn btn-ghost"
                                         onClick={handleImprove}
                                         disabled={isImproving}
-                                        title="Improve this Prompt with AI"
+                                        title={canUseAI ? "Improve this Prompt with AI" : "Pro feature - Upgrade to use AI improvements"}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '0.5rem',
-                                            color: 'var(--accent-primary)'
+                                            color: canUseAI ? 'var(--accent-primary)' : 'var(--text-muted)'
                                         }}
                                     >
                                         {isImproving ? (
@@ -708,8 +718,18 @@ ${prompt.content}
                                             </>
                                         ) : (
                                             <>
-                                                <Wand2 size={18} />
+                                                {canUseAI ? <Wand2 size={18} /> : <Lock size={18} />}
                                                 <span>Improve</span>
+                                                {!canUseAI && (
+                                                    <span style={{
+                                                        fontSize: '0.65rem',
+                                                        padding: '0.1rem 0.3rem',
+                                                        background: 'rgba(99, 102, 241, 0.2)',
+                                                        color: 'var(--accent-primary)',
+                                                        borderRadius: '3px',
+                                                        fontWeight: 600
+                                                    }}>PRO</span>
+                                                )}
                                             </>
                                         )}
                                     </button>
@@ -945,7 +965,16 @@ ${prompt.content}
             </div>
         </div>,
         document.body
-    );
+    ),
+    showUpgradeModal && (
+        <UpgradeModal
+            key="upgrade-modal"
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+            reason="ai_feature"
+        />
+    )
+    ];
 };
 
 export default PromptDetailModal;
