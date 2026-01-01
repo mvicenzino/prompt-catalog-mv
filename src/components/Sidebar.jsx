@@ -101,6 +101,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                             <NavLink
                                 key={item.path}
                                 to={item.path}
+                                end={item.path === '/app'}
                                 className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                                 onClick={onClose}
                             >
