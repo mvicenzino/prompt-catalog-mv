@@ -1,15 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
-import { X, Sparkles, Loader2, Variable } from 'lucide-react';
+import { X, Sparkles, Loader2, Variable, Lock } from 'lucide-react';
 import { usePrompts } from '../hooks/usePrompts';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'sonner';
+import { useSubscription } from '../hooks/useSubscription';
+import UpgradeModal from './UpgradeModal';
 
 const AddPromptModal = ({ isOpen, onClose }) => {
     const { addPrompt } = usePrompts();
     const { getToken } = useAuth();
+    const { canUseAI } = useSubscription();
     const [attachment, setAttachment] = useState(null);
     const [isCategorizin, setIsCategorizing] = useState(false);
     const [hasAutoCategorzed, setHasAutoCategorized] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState('ai_feature');
     const [formData, setFormData] = useState({
         title: '',
         content: '',
@@ -19,9 +24,18 @@ const AddPromptModal = ({ isOpen, onClose }) => {
     });
 
     // Auto-categorize when content is long enough and hasn't been categorized yet
-    const autoCategorize = useCallback(async () => {
+    const autoCategorize = useCallback(async (manual = false) => {
         if (!formData.content || formData.content.length < 20) return;
         if (isCategorizin || hasAutoCategorzed) return;
+
+        // Check Pro access - show upgrade modal if manual click
+        if (!canUseAI) {
+            if (manual) {
+                setUpgradeReason('ai_feature');
+                setShowUpgradeModal(true);
+            }
+            return;
+        }
 
         setIsCategorizing(true);
         try {
@@ -56,7 +70,7 @@ const AddPromptModal = ({ isOpen, onClose }) => {
         } finally {
             setIsCategorizing(false);
         }
-    }, [formData.content, formData.title, getToken, isCategorizin, hasAutoCategorzed]);
+    }, [formData.content, formData.title, getToken, isCategorizin, hasAutoCategorzed, canUseAI]);
 
     // Debounce auto-categorization
     useEffect(() => {
@@ -142,16 +156,26 @@ const AddPromptModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        addPrompt({
+        const result = await addPrompt({
             ...formData,
             tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
             attachment: attachment // Save the attachment object
         });
-        onClose();
-        setFormData({ title: '', content: '', category: 'Images', source: 'Other', tags: '' });
-        setAttachment(null);
+
+        if (result?.upgrade) {
+            // Show upgrade modal for limit reached
+            setUpgradeReason('prompt_limit');
+            setShowUpgradeModal(true);
+            return;
+        }
+
+        if (result?.success) {
+            onClose();
+            setFormData({ title: '', content: '', category: 'Images', source: 'Other', tags: '' });
+            setAttachment(null);
+        }
     };
 
     return (
@@ -240,20 +264,35 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                     type="button"
                                     onClick={() => {
                                         setHasAutoCategorized(false);
-                                        autoCategorize();
+                                        autoCategorize(true);
                                     }}
                                     disabled={isCategorizin || formData.content.length < 20}
                                     className="btn btn-ghost icon-only sm"
-                                    title="Auto-categorize with AI"
+                                    title={canUseAI ? "Auto-categorize with AI" : "Pro feature - Upgrade to use AI categorization"}
                                     style={{
                                         padding: '0.2rem',
-                                        color: isCategorizin ? 'var(--accent-primary)' : 'var(--text-muted)'
+                                        color: isCategorizin ? 'var(--accent-primary)' : canUseAI ? 'var(--text-muted)' : 'var(--text-muted)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem'
                                     }}
                                 >
                                     {isCategorizin ? (
                                         <Loader2 size={14} className="spin" />
-                                    ) : (
+                                    ) : canUseAI ? (
                                         <Sparkles size={14} />
+                                    ) : (
+                                        <>
+                                            <Lock size={12} />
+                                            <span style={{
+                                                fontSize: '0.6rem',
+                                                padding: '0.05rem 0.2rem',
+                                                background: 'rgba(99, 102, 241, 0.2)',
+                                                color: 'var(--accent-primary)',
+                                                borderRadius: '2px',
+                                                fontWeight: 600
+                                            }}>PRO</span>
+                                        </>
                                     )}
                                 </button>
                             </label>
@@ -299,6 +338,14 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                     </div>
                 </form>
             </div>
+
+            {showUpgradeModal && (
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    reason={upgradeReason}
+                />
+            )}
         </div>
     );
 };

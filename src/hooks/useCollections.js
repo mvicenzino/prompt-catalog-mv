@@ -46,7 +46,7 @@ export const useCollections = () => {
     const createCollection = async (name, description) => {
         try {
             const token = await getToken();
-            if (!token) return null;
+            if (!token) return { success: false, error: 'Not authenticated' };
 
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -61,12 +61,16 @@ export const useCollections = () => {
                 const newCollection = await response.json();
                 newCollection.promptIds = newCollection.promptIds || [];
                 setCollections(prev => [newCollection, ...prev]);
-                return newCollection.id;
+                return { success: true, id: newCollection.id };
+            } else if (response.status === 402) {
+                // Payment required - limit reached
+                const error = await response.json();
+                return { success: false, error: 'limit_reached', code: error.code, upgrade: true };
             }
         } catch (error) {
             console.error('Error creating collection:', error);
         }
-        return null;
+        return { success: false, error: 'Failed to create collection' };
     };
 
     const deleteCollection = async (id) => {

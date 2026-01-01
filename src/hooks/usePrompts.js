@@ -35,7 +35,7 @@ export const usePrompts = () => {
     const addPrompt = async (prompt) => {
         try {
             const token = await getToken();
-            if (!token) return;
+            if (!token) return { success: false, error: 'Not authenticated' };
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: {
@@ -47,9 +47,19 @@ export const usePrompts = () => {
             if (response.ok) {
                 const newPrompt = await response.json();
                 setPrompts(prev => [newPrompt, ...prev]);
+                return { success: true, prompt: newPrompt };
+            } else if (response.status === 402) {
+                // Payment required - limit reached
+                const error = await response.json();
+                return { success: false, error: 'limit_reached', code: error.code, upgrade: true };
+            } else {
+                const error = await response.json().catch(() => ({}));
+                toast.error('Failed to add prompt', { description: error.message });
+                return { success: false, error: error.message };
             }
         } catch (error) {
             console.error('Error adding prompt:', error);
+            return { success: false, error: error.message };
         }
     };
 

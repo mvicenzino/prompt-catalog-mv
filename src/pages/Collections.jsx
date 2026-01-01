@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Plus, ChevronRight, X, Sparkles, RefreshCw, Wand2, Check, Briefcase, Code, Palette, MessageSquare, FileText, Target } from 'lucide-react';
+import { Layers, Plus, ChevronRight, X, Sparkles, RefreshCw, Wand2, Check, Briefcase, Code, Palette, MessageSquare, FileText, Target, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollections } from '../hooks/useCollections';
 import { usePrompts } from '../hooks/usePrompts';
+import { useSubscription } from '../hooks/useSubscription';
 import { getSourceIcon } from '../utils/sourceIcon';
+import UpgradeModal from '../components/UpgradeModal';
 
 // AI-suggested collection templates based on use cases
 const AI_COLLECTION_TEMPLATES = [
@@ -61,8 +63,11 @@ const AI_COLLECTION_TEMPLATES = [
 const Collections = () => {
     const { collections, isLoaded, createCollection, addPromptToCollection, regenerateAICollections } = useCollections();
     const { prompts, isLoaded: promptsLoaded } = usePrompts();
+    const { canUseAI } = useSubscription();
     const [showNewModal, setShowNewModal] = useState(false);
     const [showAIBuilder, setShowAIBuilder] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeReason, setUpgradeReason] = useState('collection_limit');
     const [selectedTemplates, setSelectedTemplates] = useState([]);
     const [aiBuilding, setAiBuilding] = useState(false);
     const [newName, setNewName] = useState('');
@@ -114,11 +119,21 @@ const Collections = () => {
             console.log(`Template ${template.name}: Found ${matchingPrompts.length} matching prompts`);
 
             // Create collection with description
-            const collectionId = await createCollection(template.name, template.description);
-            console.log(`Created collection with ID: ${collectionId}`);
+            const result = await createCollection(template.name, template.description);
+            console.log(`Created collection with result:`, result);
 
-            if (collectionId) {
+            if (result?.upgrade) {
+                // Hit collection limit
+                setAiBuilding(false);
+                setShowAIBuilder(false);
+                setUpgradeReason('collection_limit');
+                setShowUpgradeModal(true);
+                return;
+            }
+
+            if (result?.success) {
                 successCount++;
+                const collectionId = result.id;
 
                 // Add matching prompts to the collection
                 for (const prompt of matchingPrompts) {
@@ -158,9 +173,16 @@ const Collections = () => {
     const handleCreateCollection = async () => {
         if (!newName.trim()) return;
         setCreating(true);
-        const id = await createCollection(newName.trim(), newDescription.trim());
+        const result = await createCollection(newName.trim(), newDescription.trim());
         setCreating(false);
-        if (id) {
+
+        if (result?.upgrade) {
+            setUpgradeReason('collection_limit');
+            setShowUpgradeModal(true);
+            return;
+        }
+
+        if (result?.success) {
             toast.success('Collection created!');
             setShowNewModal(false);
             setNewName('');
@@ -206,15 +228,35 @@ const Collections = () => {
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                             className="btn"
-                            onClick={() => setShowAIBuilder(true)}
+                            onClick={() => {
+                                if (!canUseAI) {
+                                    setUpgradeReason('ai_feature');
+                                    setShowUpgradeModal(true);
+                                } else {
+                                    setShowAIBuilder(true);
+                                }
+                            }}
                             style={{
-                                background: 'linear-gradient(135deg, #a855f7, #ec4899)',
-                                color: 'white',
-                                border: 'none'
+                                background: canUseAI
+                                    ? 'linear-gradient(135deg, #a855f7, #ec4899)'
+                                    : 'var(--bg-secondary)',
+                                color: canUseAI ? 'white' : 'var(--text-muted)',
+                                border: canUseAI ? 'none' : '1px solid var(--border-subtle)'
                             }}
                         >
-                            <Wand2 size={18} />
+                            {canUseAI ? <Wand2 size={18} /> : <Lock size={18} />}
                             AI Organize
+                            {!canUseAI && (
+                                <span style={{
+                                    fontSize: '0.65rem',
+                                    padding: '0.1rem 0.3rem',
+                                    background: 'rgba(99, 102, 241, 0.2)',
+                                    color: 'var(--accent-primary)',
+                                    borderRadius: '3px',
+                                    fontWeight: 600,
+                                    marginLeft: '0.25rem'
+                                }}>PRO</span>
+                            )}
                         </button>
                         <button
                             className="btn btn-ghost"
@@ -636,6 +678,15 @@ const Collections = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Upgrade Modal */}
+            {showUpgradeModal && (
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    reason={upgradeReason}
+                />
             )}
         </div>
     );
