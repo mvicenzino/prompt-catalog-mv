@@ -90,7 +90,9 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
                 const subscription = event.data.object;
                 const customerId = subscription.customer;
                 const subscriptionId = subscription.id;
-                const periodEnd = new Date(subscription.current_period_end * 1000);
+                const periodEnd = subscription.current_period_end
+                    ? new Date(subscription.current_period_end * 1000)
+                    : null;
 
                 // Try to find user by customer ID and activate
                 await query(
@@ -113,7 +115,9 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
                 const customerId = subscription.customer;
 
                 const status = subscription.status === 'active' ? 'active' : subscription.status;
-                const periodEnd = new Date(subscription.current_period_end * 1000);
+                const periodEnd = subscription.current_period_end
+                    ? new Date(subscription.current_period_end * 1000)
+                    : null;
 
                 await query(
                     `UPDATE subscriptions
@@ -157,7 +161,8 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
             }
 
             // Invoice paid - reactivate if was past due
-            case 'invoice.paid': {
+            case 'invoice.paid':
+            case 'invoice.payment_succeeded': {
                 const invoice = event.data.object;
                 const customerId = invoice.customer;
 
