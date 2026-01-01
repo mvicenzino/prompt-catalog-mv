@@ -115,27 +115,47 @@ ${p.content}
         });
     };
 
-    const filteredPrompts = prompts.filter(prompt => {
-        // Filter by Category
-        const matchesCategory = category
-            ? prompt.category.toLowerCase() === category.toLowerCase()
-            : true;
+    // Find the most recently added prompt ID
+    const newestPromptId = useMemo(() => {
+        if (prompts.length === 0) return null;
+        const sorted = [...prompts].sort((a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+        );
+        return sorted[0]?.id;
+    }, [prompts]);
 
-        // Filter by Favorites
-        const matchesFavorites = isFavoritesPage ? prompt.isFavorite : true;
+    const filteredPrompts = useMemo(() => {
+        const filtered = prompts.filter(prompt => {
+            // Filter by Category
+            const matchesCategory = category
+                ? prompt.category.toLowerCase() === category.toLowerCase()
+                : true;
 
-        // Filter by Source
-        const matchesSource = selectedSource
-            ? prompt.source === selectedSource
-            : true;
+            // Filter by Favorites
+            const matchesFavorites = isFavoritesPage ? prompt.isFavorite : true;
 
-        // Filter by Search
-        const matchesSearch = prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            prompt.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            prompt.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+            // Filter by Source
+            const matchesSource = selectedSource
+                ? prompt.source === selectedSource
+                : true;
 
-        return matchesCategory && matchesFavorites && matchesSource && matchesSearch;
-    });
+            // Filter by Search
+            const matchesSearch = prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                prompt.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                prompt.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            return matchesCategory && matchesFavorites && matchesSource && matchesSearch;
+        });
+
+        // Sort to show newest prompt first
+        return filtered.sort((a, b) => {
+            // Newest prompt always comes first
+            if (a.id === newestPromptId) return -1;
+            if (b.id === newestPromptId) return 1;
+            // Otherwise maintain order by created_at
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+    }, [prompts, category, isFavoritesPage, selectedSource, searchQuery, newestPromptId]);
 
     const getPageTitle = () => {
         if (isFavoritesPage) return 'Favorite Prompts';
@@ -277,6 +297,7 @@ ${p.content}
                                 toggleFavorite(prompt.id);
                             }}
                             onVote={votePrompt}
+                            isNew={prompt.id === newestPromptId}
                         />
                     </div>
                 ))}

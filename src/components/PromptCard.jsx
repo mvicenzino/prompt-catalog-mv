@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { getSourceIcon } from '../utils/sourceIcon';
 import { ChatGPTIcon, ClaudeIcon } from './AIIcons';
 
-const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
+const PromptCard = ({ prompt, onToggleFavorite, onVote, isNew }) => {
     const [isCopied, setIsCopied] = useState(false);
     const [isVoting, setIsVoting] = useState(false);
     const [showVariables, setShowVariables] = useState(false);
@@ -130,6 +130,26 @@ const PromptCard = ({ prompt, onToggleFavorite, onVote }) => {
 
     return (
         <div className="card prompt-card" style={{ position: 'relative' }}>
+            {/* Just Added Banner */}
+            {isNew && (
+                <div style={{
+                    position: 'absolute',
+                    top: '0.5rem',
+                    right: '0.5rem',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    color: 'white',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                    zIndex: 10
+                }}>
+                    Just Added
+                </div>
+            )}
             <div className="card-header">
                 <div className="badge-group">
                     <span className="badge source-badge">
