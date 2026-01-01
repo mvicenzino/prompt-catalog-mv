@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useOutletContext } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Download, Filter } from 'lucide-react';
 import Header from '../components/Header';
@@ -11,6 +11,7 @@ import { getSourceIcon } from '../utils/sourceIcon';
 const Dashboard = () => {
     const { category } = useParams();
     const location = useLocation();
+    const { newlyAddedPrompt, clearNewlyAddedPrompt } = useOutletContext() || {};
     const { prompts, toggleFavorite, deletePrompt, updatePrompt, forkPrompt, votePrompt, isLoaded } = usePrompts();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrompt, setSelectedPrompt] = useState(null);
@@ -18,6 +19,14 @@ const Dashboard = () => {
     const [selectedSource, setSelectedSource] = useState(null);
 
     const isFavoritesPage = location.pathname.includes('/favorites');
+
+    // Open detail modal when a new prompt is added
+    useEffect(() => {
+        if (newlyAddedPrompt) {
+            setSelectedPrompt(newlyAddedPrompt);
+            clearNewlyAddedPrompt?.();
+        }
+    }, [newlyAddedPrompt, clearNewlyAddedPrompt]);
 
     // Get prompts that match the current section (category or favorites)
     const sectionPrompts = useMemo(() => {

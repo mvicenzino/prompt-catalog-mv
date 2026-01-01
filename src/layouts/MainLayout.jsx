@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import AddPromptModal from '../components/AddPromptModal';
 import NotificationDropdown from '../components/NotificationDropdown';
 import UpgradeModal from '../components/UpgradeModal';
+import InstallPrompt from '../components/InstallPrompt';
 import { useSubscription } from '../hooks/useSubscription';
 
 const MainLayout = () => {
@@ -14,8 +15,19 @@ const MainLayout = () => {
     const [isMobileNotificationOpen, setIsMobileNotificationOpen] = useState(false);
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeReason, setUpgradeReason] = useState('feature');
+    const [newlyAddedPrompt, setNewlyAddedPrompt] = useState(null);
     const mobileNotificationRef = useRef(null);
     const subscription = useSubscription();
+
+    // Handle when a prompt is added - pass to child pages to open detail view
+    const handlePromptAdded = (prompt) => {
+        setNewlyAddedPrompt(prompt);
+    };
+
+    // Clear the newly added prompt after it's been viewed
+    const clearNewlyAddedPrompt = () => {
+        setNewlyAddedPrompt(null);
+    };
 
     // Function to show upgrade modal with reason
     const showUpgradeModal = (reason = 'feature') => {
@@ -119,7 +131,9 @@ const MainLayout = () => {
                 <Outlet context={{
                     onAddPrompt: () => setIsModalOpen(true),
                     showUpgradeModal,
-                    subscription
+                    subscription,
+                    newlyAddedPrompt,
+                    clearNewlyAddedPrompt
                 }} />
             </main>
 
@@ -162,12 +176,17 @@ const MainLayout = () => {
                 <span>Add Prompt</span>
             </button>
 
-            <AddPromptModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <AddPromptModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onPromptAdded={handlePromptAdded}
+            />
             <UpgradeModal
                 isOpen={upgradeModalOpen}
                 onClose={() => setUpgradeModalOpen(false)}
                 reason={upgradeReason}
             />
+            <InstallPrompt />
         </div>
     );
 };

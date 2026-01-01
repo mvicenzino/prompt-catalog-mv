@@ -12,7 +12,7 @@ const ICON_MAP = {
     ClipboardList, Target, TrendingUp, Briefcase
 };
 
-const AddPromptModal = ({ isOpen, onClose }) => {
+const AddPromptModal = ({ isOpen, onClose, onPromptAdded }) => {
     const { addPrompt } = usePrompts();
     const { getToken } = useAuth();
     const { canUseAI } = useSubscription();
@@ -224,8 +224,14 @@ const AddPromptModal = ({ isOpen, onClose }) => {
         }
 
         if (result?.success) {
-            toast.success('Prompt added!');
+            toast.success('Prompt added!', {
+                description: 'Opening prompt details...'
+            });
             onClose();
+            // Open detail view for the new prompt
+            if (onPromptAdded && result.prompt) {
+                onPromptAdded(result.prompt);
+            }
         }
     };
 
@@ -253,8 +259,14 @@ const AddPromptModal = ({ isOpen, onClose }) => {
             }
 
             if (result?.success) {
-                toast.success('Saved to your library!');
+                toast.success('Saved to your library!', {
+                    description: 'Opening prompt details...'
+                });
                 onClose();
+                // Open detail view for the new prompt
+                if (onPromptAdded && result.prompt) {
+                    onPromptAdded(result.prompt);
+                }
             }
         } catch (err) {
             toast.error('Failed to save');
@@ -494,21 +506,25 @@ const AddPromptModal = ({ isOpen, onClose }) => {
 
                 {/* Build Tab */}
                 {activeTab === 'build' && (
-                    <div style={{ padding: '1rem', maxHeight: '60vh', overflow: 'auto', position: 'relative' }}>
-                        {/* Pro Upgrade Overlay for Free Users */}
+                    <div style={{ position: 'relative' }}>
+                        {/* Pro Upgrade Overlay for Free Users - positioned over entire build tab */}
                         {!canUseAI && (
                             <div style={{
                                 position: 'absolute',
-                                inset: 0,
-                                background: 'rgba(0, 0, 0, 0.85)',
-                                zIndex: 10,
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0, 0, 0, 0.92)',
+                                zIndex: 100,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 padding: '2rem',
                                 textAlign: 'center',
-                                borderRadius: '0 0 12px 12px'
+                                borderRadius: '0 0 12px 12px',
+                                minHeight: '300px'
                             }}>
                                 <div style={{
                                     width: '64px',
@@ -518,14 +534,15 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    marginBottom: '1rem'
+                                    marginBottom: '1rem',
+                                    boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)'
                                 }}>
                                     <Wand2 size={28} style={{ color: 'white' }} />
                                 </div>
-                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.2rem' }}>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 600 }}>
                                     Build Prompts with AI
                                 </h3>
-                                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem', maxWidth: '280px' }}>
                                     Use AI-powered templates to create better prompts faster. Choose from coding, writing, image generation, and more.
                                 </p>
                                 <button
@@ -540,7 +557,9 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                         border: 'none',
                                         padding: '0.75rem 2rem',
                                         fontSize: '1rem',
-                                        fontWeight: 600
+                                        fontWeight: 600,
+                                        boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4)',
+                                        cursor: 'pointer'
                                     }}
                                 >
                                     Upgrade to Pro
@@ -551,6 +570,13 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                             </div>
                         )}
 
+                        <div style={{
+                            padding: '1rem',
+                            maxHeight: '60vh',
+                            overflow: 'auto',
+                            opacity: canUseAI ? 1 : 0.15,
+                            pointerEvents: canUseAI ? 'auto' : 'none'
+                        }}>
                         {!selectedTemplate ? (
                             /* Template Selection */
                             <div>
@@ -778,6 +804,7 @@ const AddPromptModal = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
                         )}
+                        </div>
                     </div>
                 )}
             </div>
