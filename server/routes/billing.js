@@ -67,8 +67,51 @@ router.get('/status', (req, res) => {
         keyPrefix: keyPrefix,
         priceProConfigured: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
         priceLifetimeConfigured: !!process.env.STRIPE_PRICE_LIFETIME,
-        webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET
+        webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+        priceProId: process.env.STRIPE_PRICE_PRO_MONTHLY?.substring(0, 20) + '...',
+        priceLifetimeId: process.env.STRIPE_PRICE_LIFETIME?.substring(0, 20) + '...'
     });
+});
+
+// GET /api/billing/test-checkout - Test checkout creation (debug only)
+router.get('/test-checkout', async (req, res) => {
+    try {
+        const stripe = getStripe();
+        if (!stripe) {
+            return res.json({ error: 'Stripe not configured' });
+        }
+
+        const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+        if (!priceId) {
+            return res.json({ error: 'STRIPE_PRICE_PRO_MONTHLY not set' });
+        }
+
+        // Try to retrieve the price to verify it exists
+        try {
+            const price = await stripe.prices.retrieve(priceId);
+            return res.json({
+                success: true,
+                priceId: priceId,
+                priceActive: price.active,
+                priceAmount: price.unit_amount,
+                priceCurrency: price.currency,
+                priceType: price.type,
+                productId: price.product
+            });
+        } catch (priceError) {
+            return res.json({
+                error: 'Price retrieval failed',
+                details: priceError.message,
+                code: priceError.code,
+                priceId: priceId
+            });
+        }
+    } catch (error) {
+        return res.json({
+            error: 'Test failed',
+            details: error.message
+        });
+    }
 });
 
 // GET /api/billing/subscription - Get current subscription
