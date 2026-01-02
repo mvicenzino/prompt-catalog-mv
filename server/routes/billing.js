@@ -74,6 +74,52 @@ router.get('/status', (req, res) => {
     });
 });
 
+// GET /api/billing/debug-auth-checkout - Test authenticated checkout flow (debug only)
+router.get('/debug-auth-checkout', authenticateToken, requireAuth, async (req, res) => {
+    const steps = [];
+    try {
+        const userId = req.auth.userId;
+        steps.push({ step: 'auth', success: true, userId });
+
+        const stripe = getStripe();
+        steps.push({ step: 'stripe_init', success: true });
+
+        // Get subscription
+        const subscription = await getOrCreateSubscription(userId);
+        steps.push({ step: 'subscription', success: true, plan: subscription.plan, hasCustomer: !!subscription.stripe_customer_id });
+
+        // Get or create customer
+        let customerId = subscription.stripe_customer_id;
+        if (!customerId) {
+            const customer = await stripe.customers.create({ metadata: { userId } });
+            customerId = customer.id;
+            await query('UPDATE subscriptions SET stripe_customer_id = $1 WHERE user_id = $2', [customerId, userId]);
+            steps.push({ step: 'customer_create', success: true, customerId });
+        } else {
+            steps.push({ step: 'customer_existing', success: true, customerId });
+        }
+
+        // Create session
+        const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+        const appUrl = process.env.APP_URL || 'https://prompt-catalog-mv.vercel.app';
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            payment_method_types: ['card'],
+            line_items: [{ price: priceId, quantity: 1 }],
+            mode: 'subscription',
+            success_url: `${appUrl}/app/settings?payment=success`,
+            cancel_url: `${appUrl}/app/settings?payment=canceled`,
+            metadata: { userId, priceType: 'pro' }
+        });
+        steps.push({ step: 'session_create', success: true, sessionId: session.id });
+
+        return res.json({ success: true, steps, url: session.url });
+    } catch (error) {
+        steps.push({ step: 'error', success: false, message: error.message, type: error.type, code: error.code });
+        return res.json({ success: false, steps, error: error.message });
+    }
+});
+
 // GET /api/billing/debug-checkout - Test full checkout flow step by step (debug only)
 router.get('/debug-checkout', async (req, res) => {
     const steps = [];
@@ -264,6 +310,18 @@ router.post('/checkout', authenticateToken, requireAuth, async (req, res) => {
 
         // Get or create Stripe customer
         let customerId = subscription.stripe_customer_id;
+
+        // Verify existing customer is valid (handles test->live mode transition)
+        if (customerId) {
+            try {
+                await stripe.customers.retrieve(customerId);
+                console.log('Existing customer verified:', customerId);
+            } catch (err) {
+                console.log('Customer invalid (likely from test mode), creating new:', err.message);
+                customerId = null; // Force creation of new customer
+            }
+        }
+
         if (!customerId) {
             const customer = await stripe.customers.create({
                 metadata: { userId }
@@ -273,6 +331,7 @@ router.post('/checkout', authenticateToken, requireAuth, async (req, res) => {
                 'UPDATE subscriptions SET stripe_customer_id = $1 WHERE user_id = $2',
                 [customerId, userId]
             );
+            console.log('New customer created:', customerId);
         }
 
         // Create checkout session
