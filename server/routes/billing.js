@@ -54,6 +54,23 @@ async function getUserUsage(userId) {
     };
 }
 
+// GET /api/billing/status - Check Stripe configuration (no auth needed for debug)
+router.get('/status', (req, res) => {
+    const key = process.env.STRIPE_SECRET_KEY || '';
+    const isLive = key.startsWith('sk_live_');
+    const isTest = key.startsWith('sk_test_');
+    const keyPrefix = key.substring(0, 8) + '...';
+
+    res.json({
+        stripeConfigured: !!key,
+        mode: isLive ? 'LIVE' : isTest ? 'TEST' : 'UNKNOWN',
+        keyPrefix: keyPrefix,
+        priceProConfigured: !!process.env.STRIPE_PRICE_PRO_MONTHLY,
+        priceLifetimeConfigured: !!process.env.STRIPE_PRICE_LIFETIME,
+        webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET
+    });
+});
+
 // GET /api/billing/subscription - Get current subscription
 router.get('/subscription', authenticateToken, requireAuth, async (req, res) => {
     try {
