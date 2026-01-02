@@ -74,6 +74,56 @@ router.get('/status', (req, res) => {
     });
 });
 
+// GET /api/billing/debug-checkout - Test full checkout flow step by step (debug only)
+router.get('/debug-checkout', async (req, res) => {
+    const steps = [];
+    try {
+        // Step 1: Stripe client
+        const stripe = getStripe();
+        if (!stripe) {
+            return res.json({ error: 'Stripe not configured', steps });
+        }
+        steps.push({ step: 'stripe_init', success: true });
+
+        // Step 2: Test database connection
+        const dbTest = await query('SELECT 1 as test');
+        steps.push({ step: 'db_connection', success: true, result: dbTest.rows[0] });
+
+        // Step 3: Get price
+        const priceId = process.env.STRIPE_PRICE_PRO_MONTHLY;
+        const price = await stripe.prices.retrieve(priceId);
+        steps.push({ step: 'price_retrieve', success: true, active: price.active, amount: price.unit_amount });
+
+        // Step 4: Create test customer
+        const customer = await stripe.customers.create({
+            metadata: { test: 'debug-checkout' }
+        });
+        steps.push({ step: 'customer_create', success: true, customerId: customer.id });
+
+        // Step 5: Create checkout session with customer
+        const appUrl = process.env.APP_URL || 'https://prompt-catalog-mv.vercel.app';
+        const session = await stripe.checkout.sessions.create({
+            customer: customer.id,
+            payment_method_types: ['card'],
+            line_items: [{ price: priceId, quantity: 1 }],
+            mode: 'subscription',
+            success_url: `${appUrl}/app/settings?payment=success`,
+            cancel_url: `${appUrl}/app/settings?payment=canceled`,
+            metadata: { test: 'debug-checkout' }
+        });
+        steps.push({ step: 'session_create_with_customer', success: true, sessionId: session.id });
+
+        // Clean up test customer
+        await stripe.customers.del(customer.id);
+        steps.push({ step: 'cleanup', success: true });
+
+        return res.json({ success: true, steps, sessionUrl: session.url });
+    } catch (error) {
+        steps.push({ step: 'error', success: false, message: error.message, type: error.type });
+        return res.json({ success: false, steps, error: error.message });
+    }
+});
+
 // GET /api/billing/test-checkout - Test checkout creation (debug only)
 router.get('/test-checkout', async (req, res) => {
     try {
