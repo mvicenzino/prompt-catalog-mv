@@ -133,13 +133,17 @@ router.post('/checkout', authenticateToken, requireAuth, async (req, res) => {
         const userId = req.auth.userId;
         const { priceType } = req.body; // 'pro' or 'lifetime'
 
+        console.log('Checkout request:', { priceType, userId });
+
         // Get price ID based on type
         const priceId = priceType === 'lifetime'
             ? process.env.STRIPE_PRICE_LIFETIME
             : process.env.STRIPE_PRICE_PRO_MONTHLY;
 
+        console.log('Price ID:', priceId);
+
         if (!priceId) {
-            return res.status(400).json({ error: 'Invalid price type' });
+            return res.status(400).json({ error: `Price not configured for ${priceType}` });
         }
 
         // Get or create subscription record
@@ -182,12 +186,18 @@ router.post('/checkout', authenticateToken, requireAuth, async (req, res) => {
             };
         }
 
+        console.log('Creating checkout session with params:', JSON.stringify(sessionParams, null, 2));
         const session = await stripe.checkout.sessions.create(sessionParams);
 
+        console.log('Checkout session created:', session.id);
         res.json({ url: session.url });
     } catch (error) {
         console.error('Error creating checkout session:', error);
-        res.status(500).json({ error: 'Failed to create checkout session' });
+        res.status(500).json({
+            error: 'Failed to create checkout session',
+            details: error.message,
+            type: error.type
+        });
     }
 });
 

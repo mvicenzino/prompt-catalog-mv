@@ -58,7 +58,8 @@ export function useSubscription() {
                 window.location.href = url;
             } else {
                 const data = await response.json();
-                throw new Error(data.error || 'Checkout failed');
+                console.error('Checkout error response:', data);
+                throw new Error(data.details || data.error || 'Checkout failed');
             }
         } catch (err) {
             console.error('Checkout error:', err);
