@@ -320,19 +320,24 @@ const Settings = () => {
                                         </p>
                                     </div>
                                     {isPro && !isLifetime && (
-                                        <button
-                                            className="btn btn-ghost sm"
-                                            onClick={async () => {
-                                                try {
-                                                    await openPortal();
-                                                } catch (err) {
-                                                    toast.error('Failed to open billing portal');
-                                                }
-                                            }}
-                                            style={{ fontSize: '0.85rem' }}
-                                        >
-                                            Manage
-                                        </button>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                                            <button
+                                                className="btn btn-ghost sm"
+                                                onClick={async () => {
+                                                    try {
+                                                        await openPortal();
+                                                    } catch (err) {
+                                                        toast.error('Failed to open billing portal');
+                                                    }
+                                                }}
+                                                style={{ fontSize: '0.85rem' }}
+                                            >
+                                                Manage Subscription
+                                            </button>
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                                Update payment or cancel
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
 

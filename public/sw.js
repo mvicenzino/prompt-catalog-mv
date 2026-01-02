@@ -1,3 +1,5 @@
+/* eslint-env serviceworker */
+/* eslint-disable no-unused-vars */
 const CACHE_NAME = 'promptpal-v1';
 const STATIC_CACHE = 'promptpal-static-v1';
 const DYNAMIC_CACHE = 'promptpal-dynamic-v1';

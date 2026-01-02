@@ -153,7 +153,7 @@ const InstallPrompt = () => {
                         }}>
                             <span>Tap</span>
                             <Share size={14} style={{ color: '#007AFF' }} />
-                            <span>then "Add to Home Screen"</span>
+                            <span>then &quot;Add to Home Screen&quot;</span>
                         </div>
                     ) : (
                         <button

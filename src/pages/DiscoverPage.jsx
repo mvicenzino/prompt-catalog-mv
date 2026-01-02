@@ -295,7 +295,7 @@ const TipCard = ({ tip }) => {
             {/* Bad example */}
             <div style={{ marginBottom: '0.75rem' }}>
                 <div style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600, marginBottom: '0.25rem' }}>
-                    ✗ DON'T
+                    ✗ DON&apos;T
                 </div>
                 <div style={{
                     fontSize: '0.85rem',
@@ -305,7 +305,7 @@ const TipCard = ({ tip }) => {
                     borderRadius: '6px',
                     borderLeft: '2px solid #ef4444'
                 }}>
-                    "{tip.bad}"
+                    &quot;{tip.bad}&quot;
                 </div>
             </div>
 
@@ -323,7 +323,7 @@ const TipCard = ({ tip }) => {
                     borderLeft: '2px solid #22c55e',
                     position: 'relative'
                 }}>
-                    "{tip.good}"
+                    &quot;{tip.good}&quot;
                     <button
                         onClick={handleCopy}
                         style={{

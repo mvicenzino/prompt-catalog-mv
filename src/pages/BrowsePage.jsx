@@ -159,7 +159,7 @@ const BrowsePage = () => {
             {searchQuery.trim() && (
                 <div style={{ marginBottom: '2rem' }}>
                     <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>
-                        Search Results for "{searchQuery}"
+                        Search Results for &quot;{searchQuery}&quot;
                     </h2>
                     {searchResults.length > 0 ? (
                         <div className="prompt-grid">
