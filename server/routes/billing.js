@@ -69,7 +69,8 @@ router.get('/status', (req, res) => {
         priceLifetimeConfigured: !!process.env.STRIPE_PRICE_LIFETIME,
         webhookConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
         priceProId: process.env.STRIPE_PRICE_PRO_MONTHLY?.substring(0, 20) + '...',
-        priceLifetimeId: process.env.STRIPE_PRICE_LIFETIME?.substring(0, 20) + '...'
+        priceLifetimeId: process.env.STRIPE_PRICE_LIFETIME?.substring(0, 20) + '...',
+        appUrl: process.env.APP_URL || 'NOT SET (will use localhost)'
     });
 });
 
@@ -89,6 +90,22 @@ router.get('/test-checkout', async (req, res) => {
         // Try to retrieve the price to verify it exists
         try {
             const price = await stripe.prices.retrieve(priceId);
+
+            // Also try creating a test checkout session
+            const appUrl = process.env.APP_URL || 'https://prompt-catalog-mv.vercel.app';
+            const sessionParams = {
+                payment_method_types: ['card'],
+                line_items: [{
+                    price: priceId,
+                    quantity: 1
+                }],
+                mode: 'subscription',
+                success_url: `${appUrl}/app/settings?payment=success`,
+                cancel_url: `${appUrl}/app/settings?payment=canceled`,
+            };
+
+            const session = await stripe.checkout.sessions.create(sessionParams);
+
             return res.json({
                 success: true,
                 priceId: priceId,
@@ -96,13 +113,16 @@ router.get('/test-checkout', async (req, res) => {
                 priceAmount: price.unit_amount,
                 priceCurrency: price.currency,
                 priceType: price.type,
-                productId: price.product
+                productId: price.product,
+                testSessionCreated: true,
+                testSessionUrl: session.url
             });
         } catch (priceError) {
             return res.json({
-                error: 'Price retrieval failed',
+                error: 'Test failed',
                 details: priceError.message,
                 code: priceError.code,
+                type: priceError.type,
                 priceId: priceId
             });
         }
